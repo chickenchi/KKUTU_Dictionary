@@ -1,0 +1,14 @@
+// tsconfig.json
+{
+    "compilerOptions": {
+      "target": "es2017",
+      "module": "commonjs",
+      "strict": true,
+      "jsx": "react",
+      "esModuleInterop": true,
+      "skipLibCheck": true,
+      "forceConsistentCasingInFileNames": true,
+      "outDir": "./dist"
+    },
+    "include": ["src"]
+}

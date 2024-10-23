@@ -1,0 +1,16 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+  
+  html, body, #root {
+    height: 100%;
+    width: 100%;
+  }
+
+  @font-face {
+    font-family: "Pretendard";
+    font-display: fallback;
+    src: url("../public/font/Pretendard-Medium.woff") format("truetype");
+  }
