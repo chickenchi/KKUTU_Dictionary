@@ -10,7 +10,7 @@ import { useWaiting } from "../tools/waitFunction/WaitProvider";
 const Section = styled.div`
   background-color: rgb(250, 250, 250);
   width: 100%;
-  height: 81%;
+  height: 88%;
   padding-top: 20px;
   padding-left: 15px;
 
@@ -232,10 +232,6 @@ const Subtitle = styled.input`
 
   border: none;
   outline: none;
-
-  $:hover {
-    color: red;
-  }
 
   &::placeholder {
     color: rgb(150, 150, 150);

@@ -58,8 +58,7 @@ const HeaderComponent = () => {
 
       <Nav>
         <LinkText href="/">검색</LinkText>
-        <LinkText href="/add">추가</LinkText>
-        <LinkText href="/remove">삭제</LinkText>
+        <LinkText href="/modify">수정</LinkText>
         <LinkText href="/memo">메모</LinkText>
         <LinkText href="/practice">연습</LinkText>
         <LinkText href="/check_mission">미션 확인</LinkText>

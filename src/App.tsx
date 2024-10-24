@@ -1,10 +1,8 @@
 import React from "react";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import HeaderComponent from "./components/HeaderComponent";
-import FooterComponent from "./components/FooterComponent";
 import Main from "./components/Main";
-import Add from "./components/Add";
-import Remove from "./components/Remove";
+import Modify from "./components/modify/Modify";
 import { AlertManager } from "./tools/alertFunction/AlertManager";
 import Memo from "./components/Memo";
 import Practice from "./components/Practice";
@@ -15,6 +13,7 @@ import Hack from "./components/Hack";
 import CheckMission from "./components/CheckMission";
 import AttackPattern from "./components/AttackPattern";
 import Waiting from "./tools/waitFunction/Waiting";
+import SubjectPopup from "./tools/subjectFunction/Subject";
 
 const App = () => {
   return (
@@ -25,17 +24,16 @@ const App = () => {
         <CommandManager />
         <AlertManager />
         <HeaderComponent />
+        <SubjectPopup />
         <Routes>
           <Route path="/" element={<Main />} />
-          <Route path="/add" element={<Add />} />
-          <Route path="/remove" element={<Remove />} />
+          <Route path="/modify" element={<Modify />} />
           <Route path="/memo" element={<Memo />} />
           <Route path="/practice" element={<Practice />} />
           <Route path="/hack" element={<Hack />} />
           <Route path="/check_mission" element={<CheckMission />} />
           <Route path="/pattern" element={<AttackPattern />} />
         </Routes>
-        <FooterComponent />
       </AllProviders>
     </BrowserRouter>
   );

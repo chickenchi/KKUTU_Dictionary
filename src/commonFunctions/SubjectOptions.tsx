@@ -1,7 +1,6 @@
 export const subjectOptions = [
   { value: "all", label: "주제 없음" },
   { value: "", label: "--------- 노인정 주제 ---------", disabled: true },
-  { value: "construction", label: "건설" },
   { value: "economy", label: "경제" },
   { value: "historicalRemains", label: "고적" },
   { value: "industry", label: "공업" },

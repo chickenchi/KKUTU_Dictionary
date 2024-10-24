@@ -13,7 +13,7 @@ import { useWaiting } from "../tools/waitFunction/WaitProvider";
 const Header = styled.div`
   background-color: rgb(250, 250, 250);
   width: 100%;
-  height: 81%;
+  height: 88%;
 
   font-family: "Pretendard";
 `;

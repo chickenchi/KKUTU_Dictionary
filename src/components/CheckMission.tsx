@@ -14,7 +14,7 @@ const Header = styled.div`
   position: relative;
 
   width: 100%;
-  height: 81%;
+  height: 88%;
 
   font-family: "Pretendard";
 `;

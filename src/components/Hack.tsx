@@ -4,7 +4,7 @@ import styled from "styled-components";
 const Hacking = styled.div`
   color: red;
   font-size: 60px;
-  height: 81%;
+  height: 88%;
 
   display: flex;
   justify-content: center;
