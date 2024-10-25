@@ -1,6 +1,11 @@
-import React, { useState } from "react";
+import React, { SetStateAction, useEffect, useRef, useState } from "react";
 import Modal from "react-modal";
 import styled, { createGlobalStyle } from "styled-components";
+import { jaccardSimilarity } from "../../components/functions/JaccardSimilarity";
+import { subjectOptions } from "../../commonFunctions/SubjectOptions";
+
+import { useRecoilState } from "recoil";
+import { modalState } from "../../Atom";
 
 // 전역 스타일을 설정합니다.
 const GlobalStyle = createGlobalStyle`
@@ -29,11 +34,11 @@ const StyledModal = styled(Modal)`
 
     background-color: rgb(250, 250, 250);
 
-    max-width: 500px;
+    max-width: 550px;
     width: 100%;
     height: 500px;
 
-    padding: 20px;
+    padding: 30px;
 
     border-radius: 5px;
 
@@ -54,29 +59,72 @@ const Title = styled.h2`
 const SearchDiv = styled.div`
   width: 90%;
   height: 35px;
+
+  margin-bottom: 20px;
 `;
 
 const SearchInput = styled.input`
-  margin: 0 10px;
+  background-color: rgb(255, 255, 255);
 
-  border: none;
+  padding: 10px;
 
   width: 75%;
   height: 100%;
+
+  margin: 0 10px;
+
+  border: none;
+  border-radius: 5px;
+
+  color: rgb(80, 80, 80);
+  font-size: 11pt;
 `;
 
 const SearchButton = styled.button`
-  border: none;
+  background-color: rgb(215, 215, 215);
 
   width: 20%;
   height: 100%;
+
+  border: none;
+  border-radius: 5px;
 `;
 
 const SubjectList = styled.div`
-  background-color: gray;
+  background-color: rgb(238, 238, 238);
 
   width: 90%;
   height: 300px;
+
+  padding: 10px;
+
+  border-radius: 5px;
+
+  overflow-x: auto;
+  overflow-y: none;
+`;
+
+const SubjectItem = styled.button<{ element: boolean }>`
+  background-color: ${({ element }) =>
+    element ? "rgb(225, 225, 225)" : "rgba(0, 0, 0, 0)"};
+
+  border: none;
+
+  width: 100%;
+  height: 30px;
+
+  margin: 5px 0;
+
+  padding-left: 10px;
+
+  display: flex;
+  align-items: center;
+
+  font-size: 12pt;
+
+  &:hover {
+    background-color: rgb(230, 230, 230);
+  }
 `;
 
 const ButtonContainer = styled.div`
@@ -100,8 +148,69 @@ const Close = styled.button`
   border-radius: 5px;
 `;
 
-function SubjectModal() {
-  const [isOpen, setIsOpen] = useState(true);
+interface SubjectModalProps {
+  setSubjectChange: (e: any) => void;
+}
+
+function SubjectModal({ setSubjectChange }: SubjectModalProps) {
+  const [isOpen, setIsOpen] = useRecoilState(modalState);
+
+  const [subject, setSubject] = useState("");
+  const [result, setResult] = useState<string[]>([]);
+  const [selected, setSelected] = useState("");
+
+  const searchInput = useRef<HTMLInputElement | null>(null);
+
+  const handleModalSubjectChange = (e: any) => {
+    setSubject(e.target.value);
+  };
+
+  useEffect(() => {
+    Search();
+
+    setTimeout(() => {
+      if (searchInput.current) {
+        searchInput.current.focus();
+      }
+    }, 0);
+  }, [isOpen]);
+
+  const Search = () => {
+    setSelected("");
+
+    let similarity: { subject: string; score: number }[] = [
+      {
+        subject: "",
+        score: 0,
+      },
+    ];
+
+    subjectOptions.forEach((el) => {
+      let subjectName = el.label;
+      if (!subjectName.includes("-") && subjectName !== "") {
+        let score = jaccardSimilarity(subject, subjectName);
+
+        similarity.push({ subject: subjectName, score: score });
+      }
+    });
+
+    similarity.sort((a, b) => b.score - a.score);
+
+    let items: string[] = [];
+
+    similarity.forEach((el) => {
+      if (el.score || !subject) items.push(el.subject);
+    });
+
+    setResult(items);
+  };
+
+  const handleKeyDown = (e: any) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+      Search();
+    }
+  };
 
   return (
     <>
@@ -115,20 +224,42 @@ function SubjectModal() {
         <Title>단어 주제 변경</Title>
 
         <SearchDiv>
-          <SearchInput />
-          <SearchButton>검색</SearchButton>
+          <SearchInput
+            value={subject}
+            onChange={handleModalSubjectChange}
+            onKeyDown={handleKeyDown}
+            placeholder="주제를 입력해 주세요"
+            ref={searchInput}
+          />
+          <SearchButton onClick={Search}>검색</SearchButton>
         </SearchDiv>
 
-        <SubjectList></SubjectList>
+        <SubjectList>
+          {result.map(
+            (subject, index) =>
+              subject && (
+                <SubjectItem
+                  onClick={() => setSelected(subject)}
+                  element={subject === selected}
+                  key={index}
+                >
+                  {subject}
+                </SubjectItem>
+              )
+          )}
+        </SubjectList>
 
         <ButtonContainer>
-          <Close
-            onClick={() => {
-              setIsOpen(false);
-            }}
-          >
-            선택
-          </Close>
+          {selected && (
+            <Close
+              onClick={() => {
+                setIsOpen(false);
+                setSubjectChange(selected);
+              }}
+            >
+              선택
+            </Close>
+          )}
           <Close onClick={() => setIsOpen(false)}>닫기</Close>
         </ButtonContainer>
       </StyledModal>

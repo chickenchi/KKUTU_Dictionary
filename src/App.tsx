@@ -13,29 +13,32 @@ import Hack from "./components/Hack";
 import CheckMission from "./components/CheckMission";
 import AttackPattern from "./components/AttackPattern";
 import Waiting from "./tools/waitFunction/Waiting";
-import SubjectPopup from "./tools/subjectFunction/Subject";
+import { RecoilRoot } from "recoil";
+import Test from "./components/Test";
 
 const App = () => {
   return (
-    <BrowserRouter>
-      <AllProviders>
-        <Waiting />
-        <PreventProvider />
-        <CommandManager />
-        <AlertManager />
-        <HeaderComponent />
-        <SubjectPopup />
-        <Routes>
-          <Route path="/" element={<Main />} />
-          <Route path="/modify" element={<Modify />} />
-          <Route path="/memo" element={<Memo />} />
-          <Route path="/practice" element={<Practice />} />
-          <Route path="/hack" element={<Hack />} />
-          <Route path="/check_mission" element={<CheckMission />} />
-          <Route path="/pattern" element={<AttackPattern />} />
-        </Routes>
-      </AllProviders>
-    </BrowserRouter>
+    <RecoilRoot>
+      <BrowserRouter>
+        <AllProviders>
+          <Waiting />
+          <PreventProvider />
+          <CommandManager />
+          <AlertManager />
+          <HeaderComponent />
+          <Routes>
+            <Route path="/" element={<Main />} />
+            <Route path="/modify" element={<Modify />} />
+            <Route path="/memo" element={<Memo />} />
+            <Route path="/practice" element={<Practice />} />
+            <Route path="/hack" element={<Hack />} />
+            <Route path="/check_mission" element={<CheckMission />} />
+            <Route path="/pattern" element={<AttackPattern />} />
+            <Route path="/test" element={<Test />} />
+          </Routes>
+        </AllProviders>
+      </BrowserRouter>
+    </RecoilRoot>
   );
 };
 

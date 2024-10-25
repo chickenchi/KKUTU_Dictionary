@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import { saveToLocalStorage } from "../../commonFunctions/LocalStorage";
 import axios from "axios";
@@ -7,16 +7,54 @@ import { useWord } from "../../tools/wordFunction/WordProvider";
 import { useWaiting } from "../../tools/waitFunction/WaitProvider";
 import { useAlarm } from "../../tools/alarmFunction/AlarmProvider";
 import { subjectOptions } from "../../commonFunctions/SubjectOptions";
+import SubjectModal from "../../tools/subjectFunction/Subject";
+import { useRecoilState } from "recoil";
+import { modalState } from "../../Atom";
 
 const AddRemoveContainer = styled.div``;
 
-const Subject = styled.select`
+const SubjectDiv = styled.div`
+  position: relative;
+
+  background-color: white;
+
   height: 25px;
-  width: 200px;
+  width: 160px;
+
   margin-right: 5px;
   margin-bottom: 10px;
 
+  display: flex;
+  justify-content: center;
+  align-items: center;
+`;
+
+const Subject = styled.input`
+  background-color: white;
+
+  height: 25px;
+  width: 160px;
+
+  padding-left: 5px;
+
+  border: 1px solid black;
+  border-radius: 3px;
+
   font-family: "Pretendard";
+`;
+
+const SubjectListBtn = styled.button`
+  position: absolute;
+  right: 3px;
+
+  background-image: url("./image/list.png");
+  background-color: rgba(0, 0, 0, 0);
+  background-size: cover;
+
+  width: 20px;
+  height: 20px;
+
+  border: none;
 `;
 
 const Word = styled.textarea`
@@ -75,7 +113,7 @@ const ExceptButton = styled.button`
   background-color: rgba(0, 0, 0, 0);
 
   width: 40px;
-  height: 100%;
+  height: 20px;
 
   border: 1px solid red;
   border-radius: 5px;
@@ -155,8 +193,10 @@ const CommitButton = styled.button`
 `;
 
 const AddRemove = () => {
-  const [subjectOption, setSubjectOption] = useState<string>("all");
-  const [words, setWords] = useState<string>("");
+  const [subjectOption, setSubjectOption] = useState<string>("주제 없음");
+  const [wordContainer, setWordContainer] = useState<string>("");
+
+  const [showModal, setShowModal] = useRecoilState(modalState);
 
   const handleWordChange = (event: any) => {
     setWordValue(event.target.value);
@@ -164,6 +204,10 @@ const AddRemove = () => {
 
   const handleSubjectChange = (e: any) => {
     setSubjectOption(e.target.value);
+  };
+
+  const setSubjectChange = (subject: string) => {
+    setSubjectOption(subject);
   };
 
   const handleWordDown = (e: any) => {
@@ -177,23 +221,42 @@ const AddRemove = () => {
 
   const { wordValue, setWordValue } = useWord();
 
-  const wordRef = useRef(null);
+  const wordRef = useRef<HTMLTextAreaElement | null>(null);
 
   const {} = useCommand();
   const { setWaiting } = useWaiting();
 
+  const wordContainerToWordItem = () => {
+    let words: string[] = [];
+    let subjects: string[] = [];
+
+    wordContainer.split("\n").forEach((w) => {
+      if (w) {
+        let word = w.split("[")[0];
+        let subject = w.split("[")[1].split("]")[0];
+
+        words.push(word);
+        subjects.push(subject);
+      }
+    });
+
+    return [words, subjects];
+  };
+
   const adding = async () => {
-    if (!wordValue) {
+    if (!wordContainer) {
       setAlarm("error", "단어를 입력해 주세요.");
       return;
     }
+
+    const wordItem = wordContainerToWordItem();
 
     try {
       setWaiting(true);
 
       const response = await axios.post("http://127.0.0.1:5000/insert", {
-        word: wordValue,
-        subject: subjectOption,
+        word: wordItem[0],
+        subject: wordItem[1],
       });
 
       setWaiting(false);
@@ -209,16 +272,19 @@ const AddRemove = () => {
   };
 
   const removing = async () => {
-    if (!wordValue) {
+    if (!wordContainer) {
       setAlarm("error", "단어를 입력해 주세요.");
       return;
     }
+
+    const wordItem = wordContainerToWordItem();
 
     try {
       setWaiting(true);
 
       const response = await axios.post("http://127.0.0.1:5000/delete", {
-        word: wordValue,
+        word: wordItem[0],
+        subject: wordItem[1],
       });
 
       setWaiting(false);
@@ -235,58 +301,69 @@ const AddRemove = () => {
 
   const pushWord = () => {
     let wordSet: string[] = wordValue.split("\n");
-    let wordLabel: string = words;
+    let wordLabel: string = wordContainer;
+    let subject = getValueByLabel(subjectOption);
 
     wordSet.forEach((word) => {
-      wordLabel += `${word}[${subjectOption}]\n`;
+      if (wordLabel.includes(`${word}[${subject}]`) || !word) return;
+
+      wordLabel += `${word}[${subject}]\n`;
     });
 
-    setWords(wordLabel);
+    setWordContainer(wordLabel);
   };
 
   const pullWord = () => {
     let wordSet: string[] = wordValue.split("\n");
-    let wordLabel: string = words;
+    let subject = getValueByLabel(subjectOption);
+    let wordLabel: string = wordContainer;
 
-    const regex = new RegExp(
-      `${Array.from(wordSet).join(
-        `\\[${subjectOption}\\]\\n|`
-      )}\\[${subjectOption}\\]\\n`,
-      "g"
-    );
-    wordLabel = wordLabel.replace(regex, "");
+    wordSet.forEach((word) => {
+      if (word) wordLabel = wordLabel.replace(`${word}[${subject}]\n`, "");
+    });
 
-    setWords(wordLabel);
+    setWordContainer(wordLabel);
   };
 
   const exceptWord = (index: number) => {
-    let line = words.split("\n")[index];
-    let wordLabel: string = words.replace(line, "");
+    let line = wordContainer.split("\n")[index] + "\n";
+    let wordLabel: string = wordContainer.replace(line, "");
 
-    setWords(wordLabel);
+    setWordContainer(wordLabel);
   };
+
+  const getValueByLabel = (label: string) => {
+    const option = subjectOptions.find((option) => option.label === label);
+    return option ? option.value : null; // option이 있으면 value 반환, 없으면 null 반환
+  };
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (wordRef.current) wordRef.current.focus();
+    }, 0);
+  }, []);
 
   return (
     <AddRemoveContainer>
-      <Subject
-        name="subject"
-        value={subjectOption}
-        onChange={handleSubjectChange}
-      >
-        {subjectOptions.map((option, index) => (
-          <option key={index} value={option.value} disabled={option.disabled}>
-            {option.label}
-          </option>
-        ))}
-      </Subject>
+      <SubjectModal setSubjectChange={setSubjectChange} />
+
+      <SubjectDiv>
+        <Subject
+          type="text"
+          name="subject"
+          value={subjectOption}
+          onChange={handleSubjectChange}
+        />
+        <SubjectListBtn onClick={() => setShowModal(true)} />
+      </SubjectDiv>
 
       <Word
         value={wordValue}
         placeholder="단어만 입력해 주세요.
-            잡다한 내용이나 특수문자가 포함된 경우 삭제 작업에 차질이 생길 수 있습니다!&#13;
-            단축키 모음
-            - 줄을 바꿀 땐 Shift+Enter를 누르시면 됩니다.
-            - 적용하실 땐 Ctrl+S를 누르시면 됩니다."
+잡다한 내용이나 특수문자가 포함된 경우 삭제 작업에 차질이 생길 수 있습니다!&#13;
+단축키 모음
+ - 줄을 바꿀 땐 Shift+Enter를 누르시면 됩니다.
+ - 적용하실 땐 Ctrl+S를 누르시면 됩니다."
         onChange={handleWordChange}
         onKeyDown={handleWordDown}
         ref={wordRef}
@@ -296,9 +373,9 @@ const AddRemove = () => {
       <CommitButton onClick={() => pullWord()}>제외</CommitButton>
 
       <ViewWord>
-        {!words
+        {!wordContainer
           ? "추가된 단어가 없습니다."
-          : words.split("\n").map((line, index) =>
+          : wordContainer.split("\n").map((line, index) =>
               line ? (
                 <WordItem key={index}>
                   <WordItemText>{line}</WordItemText>

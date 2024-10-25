@@ -796,6 +796,14 @@ ${compareWord}
     setInitial(e.target.value);
   };
 
+  const wordRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (wordRef.current) wordRef.current.focus();
+    }, 0);
+  }, []);
+
   return (
     <Header className="Header">
       {showAlarm && (
@@ -820,6 +828,7 @@ ${compareWord}
               onChange={handleInitialChange}
               maxLength={1}
               disabled={submittedAnswer}
+              ref={wordRef}
             />
           </AnalyzingWordDiv>
         ) : (

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
 import axios from "axios";
 import {
@@ -604,6 +604,14 @@ const AttackPattern = () => {
   const { setAlarm, showAlarm, alarmIcon, alarmDescription, remainedTime } =
     useAlarm();
 
+  const wordRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (wordRef.current) wordRef.current.focus();
+    }, 0);
+  }, []);
+
   return (
     <Header className="Header">
       {showAlarm && (
@@ -623,6 +631,7 @@ const AttackPattern = () => {
         type="text"
         placeholder="앞 글자 입력"
         maxLength={1}
+        ref={wordRef}
       />
 
       <SearchButton onClick={settingSearchAttackRoute}>검색</SearchButton>

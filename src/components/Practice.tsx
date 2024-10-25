@@ -662,6 +662,14 @@ const Practice = () => {
     setFolded(!folded);
   };
 
+  const wordRef = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    setTimeout(() => {
+      if (wordRef.current) wordRef.current.focus();
+    }, 0);
+  }, []);
+
   return (
     <Header className="Header">
       {!folded && (
@@ -787,6 +795,7 @@ const Practice = () => {
           value={answer}
           onChange={handleAnswerChange}
           onKeyUp={submit}
+          ref={wordRef}
         />
         <Shuffle onClick={settingInitial}>
           {selectedOption === "villain" ? "처음" : "섞기"}

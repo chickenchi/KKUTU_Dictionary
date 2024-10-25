@@ -432,13 +432,19 @@ class WordDB:
             return ["error", "문제가 발생하였습니다."]
     
     def insert_word(self, dto):
-        subject = dto['subject'] if dto['subject'] != 'all' else "X"
-        words = dto['word'].split("\n")
+        subjects = dto['subject'] if dto['subject'] != 'all' else "X"
+        words = dto['word']
 
-        sql = text(f"INSERT IGNORE INTO Word VALUES (:word, '{subject}', 0, '')")
+        sql = text(f"INSERT IGNORE INTO Word VALUES (:word, :subject, 0, '')")
 
         try:
-            result = self.session.execute(sql, [{'word': w} for w in words])
+            result = self.session.execute(
+              sql, 
+              [
+                {'word': w, 'subject': s} 
+                for w, s in zip(words, subjects)
+              ]
+            )
             self.session.commit()
             affected_rows = result.rowcount
             if affected_rows == 0:
@@ -451,7 +457,7 @@ class WordDB:
             return ["error", "문제가 발생하였습니다."]
         
     def delete_word(self, word):
-        words = word.split("\n")
+        words = word
 
         sql = text("DELETE FROM Word WHERE word = (:word)")
 
