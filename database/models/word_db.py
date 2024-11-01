@@ -33,6 +33,13 @@ class WordDB:
     
     def find_word(self, dto):
         first_letter = dto.word[0]
+        item_letter = dto.word[1]
+
+        if first_letter == None:
+            first_letter = ""
+        
+        if item_letter == None:
+            item_letter = ""
 
         sql = ""
         rangeSet = ""
@@ -56,17 +63,17 @@ class WordDB:
             options += f"AND subject = '{subject}'"
 
         if dto.type == 'attack':
-            sql = self.attack(dto.word[0], dto.word[1], rangeSet, options)
+            sql = self.attack(first_letter, item_letter, rangeSet, options)
         elif dto.type == 'mission':
-            sql = self.mission(dto.word[0], dto.word[1], dto.mission, rangeSet, dto.shMisType, options)
+            sql = self.mission(first_letter, item_letter, dto.mission, rangeSet, dto.shMisType, options)
         elif dto.type == 'allMission':
-            sql = self.allMission(dto.word[0], dto.word[1], rangeSet, dto.tier, options)
+            sql = self.allMission(first_letter, item_letter, rangeSet, dto.tier, options)
         elif dto.type == 'protect':
-            sql = self.protect(dto.word[0], dto.word[1], rangeSet, options)
+            sql = self.protect(first_letter, item_letter, rangeSet, options)
         elif dto.type == 'villain':
-            sql = self.villain(dto.word[0], dto.word[1], dto.backWord, rangeSet, options)
+            sql = self.villain(first_letter, item_letter, dto.backWord, rangeSet, options)
         elif dto.type == 'long':
-            sql = self.long(dto.word[0], dto.word[1], rangeSet, options)
+            sql = self.long(first_letter, item_letter, rangeSet, options)
 
         result = self.session.execute(text(sql)).fetchall()
         return result
@@ -196,103 +203,103 @@ class WordDB:
         if 'a' <= front_initial1 <= 'z':
             sql = f"""
                 WITH CountMissions AS (
-                    SELECT word, 'a' AS mission_letter, CountCharacter(word, 'a') AS letter_count, CHAR_LENGTH(word) AS word_length, checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'a' AS mission_letter, CountCharacter(word, 'a') AS letter_count, CHAR_LENGTH(word) AS word_length, checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'b', CountCharacter(word, 'b'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'b', CountCharacter(word, 'b'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'c', CountCharacter(word, 'c'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'c', CountCharacter(word, 'c'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'd', CountCharacter(word, 'd'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'd', CountCharacter(word, 'd'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'e', CountCharacter(word, 'e'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'e', CountCharacter(word, 'e'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'f', CountCharacter(word, 'f'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'f', CountCharacter(word, 'f'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'g', CountCharacter(word, 'g'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'g', CountCharacter(word, 'g'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'h', CountCharacter(word, 'h'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'h', CountCharacter(word, 'h'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'i', CountCharacter(word, 'i'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'i', CountCharacter(word, 'i'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'j', CountCharacter(word, 'j'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'j', CountCharacter(word, 'j'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'k', CountCharacter(word, 'k'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'k', CountCharacter(word, 'k'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'l', CountCharacter(word, 'l'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'l', CountCharacter(word, 'l'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'm', CountCharacter(word, 'm'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'm', CountCharacter(word, 'm'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'n', CountCharacter(word, 'n'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'n', CountCharacter(word, 'n'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'o', CountCharacter(word, 'o'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'o', CountCharacter(word, 'o'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'p', CountCharacter(word, 'p'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'p', CountCharacter(word, 'p'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'q', CountCharacter(word, 'q'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'q', CountCharacter(word, 'q'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'r', CountCharacter(word, 'r'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'r', CountCharacter(word, 'r'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 's', CountCharacter(word, 's'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 's', CountCharacter(word, 's'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 't', CountCharacter(word, 't'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 't', CountCharacter(word, 't'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'u', CountCharacter(word, 'u'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'u', CountCharacter(word, 'u'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'v', CountCharacter(word, 'v'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'v', CountCharacter(word, 'v'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'w', CountCharacter(word, 'w'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'w', CountCharacter(word, 'w'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'x', CountCharacter(word, 'x'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'x', CountCharacter(word, 'x'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'y', CountCharacter(word, 'y'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'y', CountCharacter(word, 'y'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, 'z', CountCharacter(word, 'z'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, 'z', CountCharacter(word, 'z'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                 ),
                 RankedResults AS (
-                    SELECT word, mission_letter, letter_count, word_length, checked, 
+                    SELECT word, subject, mission_letter, letter_count, word_length, checked, 
                         ROW_NUMBER() OVER (PARTITION BY mission_letter ORDER BY letter_count DESC, word_length DESC) AS ranks 
                     FROM CountMissions
                 )
-                SELECT word, mission_letter FROM RankedResults WHERE ranks = {tier} {options}
+                SELECT word, subject, mission_letter FROM RankedResults WHERE ranks = {tier}
             """
 
         elif '가' <= front_initial1 <= '힣':
             sql = f"""
                 WITH CountMissions AS (
-                    SELECT word, '가' AS mission_letter, CountCharacter(word, '가') AS letter_count, CHAR_LENGTH(word) AS word_length, checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '가' AS mission_letter, CountCharacter(word, '가') AS letter_count, CHAR_LENGTH(word) AS word_length, checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '나', CountCharacter(word, '나'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '나', CountCharacter(word, '나'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '다', CountCharacter(word, '다'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '다', CountCharacter(word, '다'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '라', CountCharacter(word, '라'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '라', CountCharacter(word, '라'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '마', CountCharacter(word, '마'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '마', CountCharacter(word, '마'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '바', CountCharacter(word, '바'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '바', CountCharacter(word, '바'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '사', CountCharacter(word, '사'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '사', CountCharacter(word, '사'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '아', CountCharacter(word, '아'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '아', CountCharacter(word, '아'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '자', CountCharacter(word, '자'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '자', CountCharacter(word, '자'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '차', CountCharacter(word, '차'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '차', CountCharacter(word, '차'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '카', CountCharacter(word, '카'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '카', CountCharacter(word, '카'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '타', CountCharacter(word, '타'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '타', CountCharacter(word, '타'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '파', CountCharacter(word, '파'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '파', CountCharacter(word, '파'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, '하', CountCharacter(word, '하'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet}
+                    SELECT word, subject, '하', CountCharacter(word, '하'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
                 ),
                 RankedResults AS (
-                    SELECT word, mission_letter, letter_count, word_length, checked, 
+                    SELECT word, subject, mission_letter, letter_count, word_length, checked, 
                         ROW_NUMBER() OVER (PARTITION BY mission_letter ORDER BY letter_count DESC, word_length DESC) AS ranks 
                     FROM CountMissions
                 )
-                SELECT word, mission_letter FROM RankedResults WHERE ranks = {tier} {options}
+                SELECT word, mission_letter FROM RankedResults WHERE ranks = {tier}
             """
 
         return sql
@@ -595,7 +602,8 @@ class WordDB:
         sql = f"""
         SELECT *
         FROM word
-        WHERE subject = 'X' AND word NOT REGEXP '^[a-z]';
+        WHERE word NOT REGEXP '^[a-z]'
+        AND length(word) > 1;
         """
 
         try:

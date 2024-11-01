@@ -9,6 +9,12 @@ import { useAlarm } from "../tools/alarmFunction/AlarmProvider";
 import { characters, hangulChars } from "../commonFunctions/wordNhangul";
 import { getFromLocalStorage } from "../commonFunctions/LocalStorage";
 import { useWaiting } from "../tools/waitFunction/WaitProvider";
+import SubjectButton from "./buttons/SubjectButton";
+import OptionButton from "./buttons/OptionButton";
+import { useRecoilState } from "recoil";
+import { optionState, subjectState } from "../Atom";
+import { getValueByLabel } from "../commonFunctions/SubjectOptions";
+import SubjectModal from "../tools/subjectFunction/Subject";
 
 const Header = styled.div`
   position: relative;
@@ -94,7 +100,7 @@ const InKeyword = styled.div`
 `;
 
 const Spell = styled.input`
-  width: 90px;
+  width: 500px;
   height: auto;
   background-color: #42341a;
   border: none;
@@ -105,6 +111,10 @@ const Spell = styled.input`
   font-family: "Pretendard";
 
   text-align: center;
+
+  &::placeholder {
+    color: white;
+  }
 `;
 
 const InputContainer = styled.div`
@@ -192,20 +202,14 @@ const RadioContainer = styled.div`
 
 const RadioTitle = styled.p`
   margin-left: 12px;
-  font-size: 13pt;
-`;
+  margin-right: 8px;
 
-const Subject = styled.select`
-  height: 25px;
-  margin-left: 10px;
-
-  font-family: "Pretendard";
+  font-size: 11pt;
 `;
 
 const Checkbox = styled.input`
   width: auto;
   height: auto;
-  margin-left: 8px;
 
   font-family: "Pretendard";
 `;
@@ -233,7 +237,8 @@ const Practice = () => {
   const [randomMissionCheck, setRandomMissionCheck] = useState<boolean>(false);
   const [resetMissionCheck, setResetMissionCheck] = useState<boolean>(false);
 
-  const [selectedOption, setSelectedOption] = useState<string>("mission");
+  const [selectedOption, setSelectedOption] = useRecoilState(optionState);
+  const [subjectOption, setSubjectOption] = useRecoilState(subjectState);
   const [answer, setAnswer] = useState("");
   const [missionValue, setMissionValue] = useState("가");
   const [initial, setInitial] = useState("가");
@@ -425,7 +430,7 @@ const Practice = () => {
     let initialList: string[];
     let initialone: string = initial[0];
 
-    if (getDoumChar(initialone) !== "failed") {
+    if (initialone && getDoumChar(initialone) !== "failed") {
       initialList = [initialone, getDoumChar(initialone)];
     } else {
       initialList = [initialone, initialone];
@@ -434,9 +439,12 @@ const Practice = () => {
     try {
       setWaiting(true);
 
+      const subject = getValueByLabel(subjectOption);
+
       let response = await axios.post("http://127.0.0.1:5000/word", {
         word: initialList,
         type: selectedOption,
+        subject: subject,
         mission: missionValue,
         backWord: "",
         shMisType: "theory",
@@ -491,9 +499,12 @@ const Practice = () => {
     } else {
       setWaiting(true);
 
+      const subject = getValueByLabel(subjectOption);
+
       const response = await axios.post("http://127.0.0.1:5000/word", {
         word: ["", ""],
         type: selectedOption,
+        subject: subject,
         mission: "",
         backWord: missionValue,
         shMisType: "theory",
@@ -561,9 +572,12 @@ const Practice = () => {
         try {
           setWaiting(true);
 
+          const subject = getValueByLabel(subjectOption);
+
           let response = await axios.post("http://127.0.0.1:5000/word", {
             word: initialList,
             type: selectedOption,
+            subject: subject,
             mission: missionValue,
             backWord: "",
             shMisType: "theory",
@@ -642,10 +656,6 @@ const Practice = () => {
     setResetMissionCheck(!resetMissionCheck);
   };
 
-  const handleOptionChange = (e: any) => {
-    setSelectedOption(e.target.value);
-  };
-
   const handleAnswerChange = (event: any) => {
     setAnswer(event.target.value);
   };
@@ -672,24 +682,16 @@ const Practice = () => {
 
   return (
     <Header className="Header">
+      <SubjectModal setSubjectChange={setSubjectOption} />
+
       {!folded && (
         <RadioList>
           <RadioContainer>
             <RadioTitle>검색 유형</RadioTitle>
           </RadioContainer>
 
-          <Subject
-            name="subject"
-            value={selectedOption}
-            onChange={handleOptionChange}
-          >
-            <option value="villain">빌런 & 앞말</option>
-            <option value="attack">공격</option>
-            <option value="protect">모든 단어</option>
-            <option value="long">장문</option>
-            <option value="language">언어</option>
-            <option value="mission">미션</option>
-          </Subject>
+          <OptionButton />
+          <SubjectButton />
 
           <RadioContainer>
             <RadioTitle>분석 허용</RadioTitle>
@@ -783,6 +785,7 @@ const Practice = () => {
               value={initial}
               onChange={handleInitialChange}
               maxLength={4}
+              placeholder={`<${subjectOption}>`}
             />
           </InKeyword>
         </Keyword>

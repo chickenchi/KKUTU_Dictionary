@@ -5,11 +5,57 @@ import {
   hangulChars,
   isLowercaseLetter,
 } from "../../../commonFunctions/wordNhangul";
+import {
+  getValueByLabel,
+  subjectOptions,
+} from "../../../commonFunctions/SubjectOptions";
+import { jaccardSimilarity } from "../../../components/functions/JaccardSimilarity";
+
+export const jaccardSubject = (subjectOption: string) => {
+  if (
+    subjectOption.includes("랜덤") ||
+    subjectOption.toLowerCase().includes("random")
+  ) {
+    while (true) {
+      const randomIndex = Math.floor(Math.random() * subjectOptions.length);
+
+      const result = subjectOptions[randomIndex].label;
+      if (result.includes("-")) continue;
+
+      return subjectOptions[randomIndex].label;
+    }
+  }
+
+  if (subjectOption === "*") {
+    subjectOption = "주제 없음";
+  }
+
+  let highSimilarity: { subject: string; score: number } = {
+    subject: "주제 없음",
+    score: 0,
+  };
+
+  subjectOptions.forEach((el) => {
+    let subjectName = el.label;
+    if (!subjectName.includes("-") && subjectName !== "") {
+      let score = jaccardSimilarity(subjectOption, subjectName);
+
+      if (highSimilarity.score < score) {
+        highSimilarity = { subject: subjectName, score: score };
+      }
+    }
+  });
+
+  console.log(highSimilarity);
+
+  return highSimilarity.subject;
+};
 
 export const fetchWordData = async (
   selectedOption: string,
   wordValue: string,
   backWordValue: string,
+  subject: string,
   tier: number | string,
   shMisType: string,
   missionValue: string,
@@ -33,9 +79,12 @@ export const fetchWordData = async (
       return "미션 몰아보기에서는 전 티어를 한 번에 볼 수 없습니다.";
     }
 
+    let subjectName = getValueByLabel(jaccardSubject(subject));
+
     const response = await axios.post("http://127.0.0.1:5000/word", {
       word: initialList,
       backWord: backWordValue,
+      subject: subjectName,
       type: selectedOption,
       mission: missionValue,
       shMisType: shMisType,

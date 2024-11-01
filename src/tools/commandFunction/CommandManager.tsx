@@ -373,6 +373,8 @@ const CommandManager = () => {
       callFunctionName = "handleMoveTo";
     } else if (prompt.startsWith(CommandTypes.UREAD)) {
       callFunctionName = "handleUread";
+    } else if (prompt.startsWith(CommandTypes.WORD_SET)) {
+      callFunctionName = "handleWordSet";
     } else if (prompt.startsWith(CommandTypes.PDEL)) {
       callFunctionName = "handlePdel";
     } else if (prompt.startsWith(CommandTypes.SEARCH)) {

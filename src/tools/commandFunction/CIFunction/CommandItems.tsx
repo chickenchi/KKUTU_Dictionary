@@ -11,7 +11,11 @@ export const CommandTypes = {
 
 export const commandList = [
   ["moveTo", "페이지를 이동합니다.", "moveTo [location]"],
-  ["uread", "단어를 읽음/읽지 않음 처리합니다.", "uread [word(s)] {tier}"],
+  [
+    "uread",
+    "단어를 읽음/읽지 않음 처리합니다.",
+    "uread [word(s)] [read/unread] [subject] {tier}",
+  ],
   ["wordSet", "단어 설정을 수정합니다.", "wordSet [wordName]"],
   [
     "pdel",
@@ -21,7 +25,7 @@ export const commandList = [
   [
     "search",
     "단어를 검색합니다.",
-    "search [searchType] [initial] {tier} {isTenSecond} {isKnown} {shMisType}",
+    "search [searchType] [initial] [subject] {tier} {isTenSecond} {isKnown} {shMisType}",
   ],
   ["iniMS", "앞 글자의 최대 점수를 구합니다.", "iniMS [initial] {chain}"],
   ["exit", "명령어를 나갑니다.", "exit"],
@@ -61,6 +65,13 @@ export const commandPresets = {
       options: [
         ["read", "읽음 표시합니다."],
         ["unread", "읽지 않음 표시합니다."],
+      ],
+    },
+    {
+      sectionName: "주제 설정",
+      title: [
+        "subject",
+        "(필수) 주제를 입력해 주세요. 전체를 찾을 땐 *를 입력하세요. 만약 입력이 정확하지 않으면 알고리즘이 판단해 줍니다.",
       ],
     },
     {
@@ -136,6 +147,14 @@ export const commandPresets = {
         ["(fI)~(bI)", "[빌런 형식] fI: 앞 글자, bI: 뒤 글자 입력"],
         ["(initial)", "[그 외 형식] initial: 앞 글자 입력"],
       ],
+    },
+    {
+      sectionName: "주제 입력",
+      title: [
+        "subject",
+        "(필수) 주제를 입력해 주세요. 전체를 찾을 땐 *를 입력하세요. 만약 입력이 정확하지 않으면 알고리즘이 판단해 줍니다.",
+      ],
+      options: [],
     },
     {
       sectionName: "티어 입력",

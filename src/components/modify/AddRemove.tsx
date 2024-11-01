@@ -8,59 +8,17 @@ import { useWaiting } from "../../tools/waitFunction/WaitProvider";
 import { useAlarm } from "../../tools/alarmFunction/AlarmProvider";
 import { subjectOptions } from "../../commonFunctions/SubjectOptions";
 import SubjectModal from "../../tools/subjectFunction/Subject";
+import SubjectButton from "../buttons/SubjectButton";
 import { useRecoilState } from "recoil";
-import { modalState } from "../../Atom";
+import { subjectState } from "../../Atom";
 
 const AddRemoveContainer = styled.div``;
-
-const SubjectDiv = styled.div`
-  position: relative;
-
-  background-color: white;
-
-  height: 25px;
-  width: 160px;
-
-  margin-right: 5px;
-  margin-bottom: 10px;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const Subject = styled.input`
-  background-color: white;
-
-  height: 25px;
-  width: 160px;
-
-  padding-left: 5px;
-
-  border: 1px solid black;
-  border-radius: 3px;
-
-  font-family: "Pretendard";
-`;
-
-const SubjectListBtn = styled.button`
-  position: absolute;
-  right: 3px;
-
-  background-image: url("./image/list.png");
-  background-color: rgba(0, 0, 0, 0);
-  background-size: cover;
-
-  width: 20px;
-  height: 20px;
-
-  border: none;
-`;
 
 const Word = styled.textarea`
   width: 98%;
   height: 100px;
   margin-right: 10px;
+  margin-top: 10px;
   margin-bottom: 10px;
   padding-left: 6px;
   padding-top: 6px;
@@ -193,17 +151,11 @@ const CommitButton = styled.button`
 `;
 
 const AddRemove = () => {
-  const [subjectOption, setSubjectOption] = useState<string>("주제 없음");
+  const [subjectOption, setSubjectOption] = useRecoilState(subjectState);
   const [wordContainer, setWordContainer] = useState<string>("");
-
-  const [showModal, setShowModal] = useRecoilState(modalState);
 
   const handleWordChange = (event: any) => {
     setWordValue(event.target.value);
-  };
-
-  const handleSubjectChange = (e: any) => {
-    setSubjectOption(e.target.value);
   };
 
   const setSubjectChange = (subject: string) => {
@@ -347,15 +299,7 @@ const AddRemove = () => {
     <AddRemoveContainer>
       <SubjectModal setSubjectChange={setSubjectChange} />
 
-      <SubjectDiv>
-        <Subject
-          type="text"
-          name="subject"
-          value={subjectOption}
-          onChange={handleSubjectChange}
-        />
-        <SubjectListBtn onClick={() => setShowModal(true)} />
-      </SubjectDiv>
+      <SubjectButton />
 
       <Word
         value={wordValue}

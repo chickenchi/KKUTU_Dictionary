@@ -8,10 +8,15 @@ import { useAlarm } from "../tools/alarmFunction/AlarmProvider";
 import { Alarm } from "../tools/alarmFunction/AlarmManager";
 import { getFromLocalStorage } from "../commonFunctions/LocalStorage";
 import { useWaiting } from "../tools/waitFunction/WaitProvider";
-import { subjectOptions } from "../commonFunctions/SubjectOptions";
+import {
+  getValueByLabel,
+  subjectOptions,
+} from "../commonFunctions/SubjectOptions";
 import { useRecoilState } from "recoil";
-import { modalState } from "../Atom";
+import { optionState, subjectState } from "../Atom";
 import SubjectModal from "../tools/subjectFunction/Subject";
+import SubjectButton from "./buttons/SubjectButton";
+import OptionButton from "./buttons/OptionButton";
 
 const Header = styled.div`
   background-color: rgb(250, 250, 250);
@@ -80,28 +85,9 @@ const Setting = styled.img`
 
 const RadioContainer = styled.div`
   height: 30px;
+
   display: flex;
   align-items: center;
-`;
-
-const Options = styled.select`
-  height: 25px;
-  margin-right: 5px;
-
-  font-family: "Pretendard";
-`;
-
-const Subject = styled.button`
-  background-color: white;
-
-  border: 1px solid black;
-  border-radius: 3px;
-
-  height: 25px;
-  width: 120px;
-  margin-right: 5px;
-
-  font-family: "Pretendard";
 `;
 
 const SearchTitle = styled.p`
@@ -212,8 +198,9 @@ const Words = styled.button<{ checked: number; rank?: number }>`
 `;
 
 const Main = () => {
-  const [selectedOption, setSelectedOption] = useState<string>("villain");
-  const [subjectOption, setSubjectOption] = useState<string>("주제 없음");
+  const [selectedOption, setSelectedOption] = useRecoilState(optionState);
+
+  const [subjectOption, setSubjectOption] = useRecoilState(subjectState);
   const [wordValue, setWordValue] = useState("");
   const [backWordValue, setBackWordValue] = useState("");
   const [missionValue, setMissionValue] = useState("");
@@ -236,16 +223,6 @@ const Main = () => {
   const { showAlarm, alarmIcon, alarmDescription, remainedTime } = useAlarm();
 
   const { setWaiting } = useWaiting();
-
-  const handleOptionChange = (e: any) => {
-    setSelectedOption(e.target.value);
-    setWordList([]);
-  };
-
-  const handleSubjectChange = (e: any) => {
-    setSubjectOption(e.target.value);
-    setWordList([]);
-  };
 
   const setSubjectChange = (subject: string) => {
     setSubjectOption(subject);
@@ -356,13 +333,6 @@ const Main = () => {
 
   const { setAlarm } = useAlarm();
 
-  const [showModal, setShowModal] = useRecoilState(modalState);
-
-  const getValueByLabel = (label: string) => {
-    const option = subjectOptions.find((option) => option.label === label);
-    return option ? option.value : null; // option이 있으면 value 반환, 없으면 null 반환
-  };
-
   const search = async () => {
     try {
       let initialList: string[];
@@ -411,6 +381,7 @@ const Main = () => {
             e.preventDefault();
             if (wordRef.current) {
               wordRef.current.focus();
+              setWordValue("");
             }
             break;
           case "ArrowRight":
@@ -418,14 +389,15 @@ const Main = () => {
 
             if (missionRef.current) {
               missionRef.current.focus();
+              setMissionValue("");
             } else if (backWordRef.current) {
               backWordRef.current.focus();
+              setBackWordValue("");
             }
             break;
           case "1":
             e.preventDefault();
             setSelectedOption("mission");
-
             break;
           case "2":
             e.preventDefault();
@@ -467,7 +439,9 @@ const Main = () => {
 
   useEffect(() => {
     setTimeout(() => {
-      if (wordRef.current) wordRef.current.focus();
+      if (wordRef.current) {
+        wordRef.current.focus();
+      }
     }, 0);
   }, []);
 
@@ -497,26 +471,8 @@ const Main = () => {
           </RadioContainer>
 
           <RadioContainer>
-            <Options
-              name="subject"
-              value={selectedOption}
-              onChange={handleOptionChange}
-            >
-              <option value="mission">미션</option>
-              <option value="attack">공격</option>
-              <option value="long">장문</option>
-              <option value="villain">빌런 & 앞말</option>
-              <option value="protect">모든 단어</option>
-            </Options>
-
-            <Subject
-              name="subject"
-              value={subjectOption}
-              onChange={handleSubjectChange}
-              onClick={() => setShowModal(true)}
-            >
-              {subjectOption === "주제 없음" ? "전체" : subjectOption}
-            </Subject>
+            <OptionButton />
+            <SubjectButton />
 
             <Checkbox
               type="checkbox"

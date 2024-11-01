@@ -7,6 +7,7 @@ import { fetchWordData } from "../innerComFunction/SearchWord";
 import { setWord } from "../innerComFunction/WordSet";
 import { useWord } from "../../wordFunction/WordProvider";
 import { UreadingWord } from "../innerComFunction/Ureading";
+import { useWaiting } from "../../waitFunction/WaitProvider";
 
 export const countOccurrences = (str: string, subStr: string) => {
   return str.split(subStr).length - 1;
@@ -54,8 +55,9 @@ const CommandItemFunction = ({
     const ureading = prompt.split("uread ")[1];
     const readTarget = ureading.split(" ")[0];
     const isRead = ureading.split(" ")[1] === "unread" ? 0 : 1;
+    const subject = ureading.split(" ")[2];
     let tier: number | string =
-      ureading.split(" ")[2] === "*" ? "*" : parseInt(ureading.split(" ")[2]);
+      ureading.split(" ")[3] === "*" ? "*" : parseInt(ureading.split(" ")[2]);
 
     if (tier === undefined) tier = 1;
 
@@ -70,6 +72,7 @@ const CommandItemFunction = ({
         "mission",
         frontInitial,
         "",
+        subject,
         tier,
         "theory",
         missionInitial,
@@ -85,6 +88,7 @@ const CommandItemFunction = ({
         "villain",
         frontInitial,
         backInitial,
+        subject,
         tier,
         "",
         "",
@@ -109,8 +113,7 @@ const CommandItemFunction = ({
     const delTarget = prompt.split("pdel ")[1];
 
     if (
-      window.location.href.includes("/remove") ||
-      window.location.href.includes("/add") ||
+      window.location.href.includes("/modify") ||
       window.location.href.includes("/memo")
     ) {
       setWordValue(wordValue.replace(new RegExp(delTarget, "g"), ""));
@@ -122,7 +125,7 @@ const CommandItemFunction = ({
   const handleSearch = async () => {
     if (
       countOccurrences(prompt, " ") < 2 ||
-      countOccurrences(prompt, " ") > 7
+      countOccurrences(prompt, " ") > 8
     ) {
       setAlarm("error", "명령이 잘못되었습니다.");
       return;
@@ -133,7 +136,8 @@ const CommandItemFunction = ({
     const parts = searchTarget.split(" ");
     const searchType = parts[0];
     const initial = parts[1];
-    const options = parts.slice(2);
+    const subject = parts[2];
+    const options = parts.slice(3);
 
     let tier: number | string =
       options[0] === "*" ? "*" : options.length >= 1 ? parseInt(options[0]) : 1;
@@ -150,6 +154,7 @@ const CommandItemFunction = ({
           searchType,
           frontInitial,
           "",
+          subject,
           tier,
           searchMissionType,
           missionInitial,
@@ -164,6 +169,7 @@ const CommandItemFunction = ({
           searchType,
           front,
           back,
+          subject,
           tier,
           searchMissionType,
           "",
@@ -177,6 +183,7 @@ const CommandItemFunction = ({
           searchType,
           initial,
           "",
+          subject,
           tier,
           searchMissionType,
           "",
@@ -216,39 +223,52 @@ const CommandItemFunction = ({
     await clearLocalStorage();
   };
 
+  const { setWaiting } = useWaiting();
+
   useEffect(() => {
     if (!funName) return;
 
-    switch (funName) {
-      case "handleWordSet":
-        handleWordSet();
-        setPrompt("");
-        break;
-      case "handleUread":
-        uread();
-        setPrompt("");
-        break;
-      case "handleMoveTo":
-        handleMoveTo();
-        setPrompt("");
-        break;
-      case "handlePdel":
-        handlePdel();
-        setPrompt("");
-        break;
-      case "handleSearch":
-        handleSearch();
-        setPrompt("");
-        break;
-      case "handleIniMS":
-        handleIniMS();
-        setPrompt("");
-        break;
-      case "handleClearLog":
-        handleClearLog();
-        setPrompt("");
-        break;
-    }
+    const request = async () => {
+      switch (funName) {
+        case "handleWordSet":
+          await handleWordSet();
+          setPrompt("");
+          setWaiting(false);
+          break;
+        case "handleUread":
+          await uread();
+          setPrompt("");
+          setWaiting(false);
+          break;
+        case "handleMoveTo":
+          await handleMoveTo();
+          setPrompt("");
+          setWaiting(false);
+          break;
+        case "handlePdel":
+          await handlePdel();
+          setPrompt("");
+          setWaiting(false);
+          break;
+        case "handleSearch":
+          await handleSearch();
+          setPrompt("");
+          setWaiting(false);
+          break;
+        case "handleIniMS":
+          await handleIniMS();
+          setPrompt("");
+          setWaiting(false);
+          break;
+        case "handleClearLog":
+          await handleClearLog();
+          setPrompt("");
+          setWaiting(false);
+          break;
+      }
+    };
+
+    request();
   }, [funName, prompt]);
 
   return null;
