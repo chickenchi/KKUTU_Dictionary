@@ -1,5 +1,6 @@
 // atoms.ts
 import { atom } from "recoil";
+import { subjectOptions } from "./commonFunctions/SubjectOptions";
 
 export const modalState = atom({
   key: "modalState",

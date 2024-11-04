@@ -61,6 +61,9 @@ const SearchDiv = styled.div`
   height: 35px;
 
   margin-bottom: 20px;
+
+  display: flex;
+  align-items: center;
 `;
 
 const SearchInput = styled.input`
@@ -68,7 +71,7 @@ const SearchInput = styled.input`
 
   padding: 10px;
 
-  width: 75%;
+  width: 80%;
   height: 100%;
 
   margin: 0 10px;
@@ -83,7 +86,9 @@ const SearchInput = styled.input`
 const SearchButton = styled.button`
   background-color: rgb(215, 215, 215);
 
-  width: 20%;
+  margin-right: 5px;
+
+  width: 15%;
   height: 100%;
 
   border: none;
@@ -105,15 +110,17 @@ const SubjectList = styled.div`
 `;
 
 const SubjectItem = styled.button<{ element: boolean }>`
+  position: relative;
+
   background-color: ${({ element }) =>
-    element ? "rgb(225, 225, 225)" : "rgba(0, 0, 0, 0)"};
+    element ? "rgb(225, 225, 225)" : "rgba(255, 255, 255, 0)"};
 
   border: none;
 
   width: 100%;
   height: 30px;
 
-  margin: 5px 0;
+  margin-bottom: 6px;
 
   padding-left: 10px;
 
@@ -166,7 +173,7 @@ function SubjectModal({ setSubjectChange }: SubjectModalProps) {
   };
 
   useEffect(() => {
-    Search();
+    search();
 
     setTimeout(() => {
       if (searchInput.current) {
@@ -175,7 +182,7 @@ function SubjectModal({ setSubjectChange }: SubjectModalProps) {
     }, 0);
   }, [isOpen]);
 
-  const Search = () => {
+  const search = () => {
     setSelected("");
 
     let similarity: { subject: string; score: number }[] = [
@@ -208,7 +215,7 @@ function SubjectModal({ setSubjectChange }: SubjectModalProps) {
   const handleKeyDown = (e: any) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      Search();
+      search();
     }
   };
 
@@ -231,7 +238,7 @@ function SubjectModal({ setSubjectChange }: SubjectModalProps) {
             placeholder="주제를 입력해 주세요"
             ref={searchInput}
           />
-          <SearchButton onClick={Search}>검색</SearchButton>
+          <SearchButton onClick={search}>검색</SearchButton>
         </SearchDiv>
 
         <SubjectList>

@@ -27,7 +27,10 @@ export const subjectOptions = [
   { value: "", label: "--------- 어인정 주제 ---------", disabled: true },
   { value: "snack", label: "간식" },
   { value: "nationalHeritage", label: "국가 지정 문화재" },
-  { value: "localAttractionsAndFestival", label: "국내 관광지 / 축제" },
+  {
+    value: "localAttractionsAndFestival",
+    label: "국내 관광지 / 축제",
+  },
   { value: "localTVShow", label: "국내 방송 프로그램" },
   { value: "companyAndBrand", label: "기업 / 브랜드" },
   { value: "kkutu", label: "끄투코리아" },
@@ -57,7 +60,10 @@ export const subjectOptions = [
   { value: "sevenKnights", label: "세븐나이츠" },
   { value: "novels/poetry/play", label: "소설/시/희곡" },
   { value: "starCraft", label: "스타크래프트" },
-  { value: "sidMeiersCivilization", label: "시드 마이어의 문명" },
+  {
+    value: "sidMeiersCivilization",
+    label: "시드 마이어의 문명",
+  },
   { value: "THE_iDOLM@STER", label: "아이돌마스터" },
   { value: "elsword", label: "엘소드" },
   { value: "movie", label: "영화" },
@@ -72,14 +78,29 @@ export const subjectOptions = [
   { value: "occupation", label: "직업" },
   { value: "kartRider", label: "카트라이더" },
   { value: "cookieRun", label: "쿠키런" },
-  { value: "clashRoyale/clashOfClans", label: "클래시 로얄/클래시 오브 클랜" },
+  {
+    value: "clashRoyale/clashOfClans",
+    label: "클래시 로얄/클래시 오브 클랜",
+  },
   { value: "pokemon", label: "포켓몬스터" },
   { value: "hearthstone", label: "하스스톤" },
-  { value: "transportationFacilities", label: "한국 교통 시설" },
+  {
+    value: "transportationFacilities",
+    label: "한국 교통 시설",
+  },
   { value: "kpop", label: "한국 대중음악" },
-  { value: "koreanRadioPrograms", label: "한국 라디오 프로그램" },
-  { value: "koreanAdministrativeDivisions", label: "한국 행정 구역" },
-  { value: "koreanIncidentsAndAccidents", label: "한국사 사건 사고" },
+  {
+    value: "koreanRadioPrograms",
+    label: "한국 라디오 프로그램",
+  },
+  {
+    value: "koreanAdministrativeDivisions",
+    label: "한국 행정 구역",
+  },
+  {
+    value: "koreanIncidentsAndAccidents",
+    label: "한국사 사건 사고",
+  },
   { value: "heroesOfTheStorm", label: "히어로즈 오브 더 스톰" },
 ];
 
