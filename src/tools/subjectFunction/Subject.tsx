@@ -6,6 +6,10 @@ import { subjectOptions } from "../../commonFunctions/SubjectOptions";
 
 import { useRecoilState } from "recoil";
 import { modalState } from "../../Atom";
+import {
+  getFromLocalStorage,
+  saveToLocalStorage,
+} from "../../commonFunctions/LocalStorage";
 
 // 전역 스타일을 설정합니다.
 const GlobalStyle = createGlobalStyle`
@@ -71,7 +75,7 @@ const SearchInput = styled.input`
 
   padding: 10px;
 
-  width: 80%;
+  width: 87%;
   height: 100%;
 
   margin: 0 10px;
@@ -86,13 +90,18 @@ const SearchInput = styled.input`
 const SearchButton = styled.button`
   background-color: rgb(215, 215, 215);
 
-  margin-right: 5px;
+  margin-right: 10px;
 
   width: 15%;
   height: 100%;
 
   border: none;
   border-radius: 5px;
+`;
+
+const RecentSearchesButton = styled.img`
+  width: 30px;
+  height: 30px;
 `;
 
 const SubjectList = styled.div`
@@ -162,18 +171,24 @@ interface SubjectModalProps {
 function SubjectModal({ setSubjectChange }: SubjectModalProps) {
   const [isOpen, setIsOpen] = useRecoilState(modalState);
 
+  const [searchMode, setSearchMode] = useState<"recent" | "subject">("subject");
   const [subject, setSubject] = useState("");
   const [result, setResult] = useState<string[]>([]);
   const [selected, setSelected] = useState("");
+  const [searchList, setSearchList] = useState<string[]>([]);
 
   const searchInput = useRef<HTMLInputElement | null>(null);
+
+  useEffect(() => {
+    search(subject);
+  }, [subject]);
 
   const handleModalSubjectChange = (e: any) => {
     setSubject(e.target.value);
   };
 
   useEffect(() => {
-    search();
+    search(subject);
 
     setTimeout(() => {
       if (searchInput.current) {
@@ -182,8 +197,20 @@ function SubjectModal({ setSubjectChange }: SubjectModalProps) {
     }, 0);
   }, [isOpen]);
 
-  const search = () => {
+  useEffect(() => {
+    const getSearchList = async () => {
+      const search = await getFromLocalStorage("searchList");
+
+      if (searchList !== null) setSearchList(search);
+    };
+
+    getSearchList();
+  }, []);
+
+  const search = async (subject: string) => {
     setSelected("");
+
+    setSearchMode("subject");
 
     let similarity: { subject: string; score: number }[] = [
       {
@@ -212,11 +239,29 @@ function SubjectModal({ setSubjectChange }: SubjectModalProps) {
     setResult(items);
   };
 
+  const switchSearchMode = () => {
+    setSearchMode(searchMode === "subject" ? "recent" : "subject");
+  };
+
   const handleKeyDown = (e: any) => {
     if (e.key === "Enter") {
       e.preventDefault();
-      search();
+      search(subject);
     }
+  };
+
+  const saveSearchMode = async () => {
+    const searchList = await getFromLocalStorage("searchList");
+    let updatedList: string[] = [];
+    if (searchList === null) {
+      updatedList = [subject];
+      saveToLocalStorage("searchList", updatedList);
+    } else {
+      updatedList = [...searchList, subject];
+      saveToLocalStorage("searchList", updatedList);
+    }
+
+    setSearchList(updatedList);
   };
 
   return (
@@ -235,25 +280,46 @@ function SubjectModal({ setSubjectChange }: SubjectModalProps) {
             value={subject}
             onChange={handleModalSubjectChange}
             onKeyDown={handleKeyDown}
+            onBlur={saveSearchMode}
             placeholder="주제를 입력해 주세요"
             ref={searchInput}
           />
-          <SearchButton onClick={search}>검색</SearchButton>
+          <RecentSearchesButton
+            src={
+              searchMode === "subject"
+                ? "./image/recent.png"
+                : "./image/search.png"
+            }
+            onClick={switchSearchMode}
+          />
         </SearchDiv>
 
         <SubjectList>
-          {result.map(
-            (subject, index) =>
-              subject && (
-                <SubjectItem
-                  onClick={() => setSelected(subject)}
-                  element={subject === selected}
-                  key={index}
-                >
-                  {subject}
-                </SubjectItem>
+          {searchMode === "subject"
+            ? result.map(
+                (subject, index) =>
+                  subject && (
+                    <SubjectItem
+                      onClick={() => setSelected(subject)}
+                      element={subject === selected}
+                      key={index}
+                    >
+                      {subject}
+                    </SubjectItem>
+                  )
               )
-          )}
+            : searchList.reverse().map(
+                (subject, index) =>
+                  subject && (
+                    <SubjectItem
+                      onClick={() => search(subject)}
+                      element={false}
+                      key={index}
+                    >
+                      {subject}
+                    </SubjectItem>
+                  )
+              )}
         </SubjectList>
 
         <ButtonContainer>
