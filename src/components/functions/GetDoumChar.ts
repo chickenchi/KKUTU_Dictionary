@@ -6,9 +6,9 @@ export function getDoumChar(lastChar: string): string {
   if (code < BASE_CODE || code > MAX_CODE) return "failed";
 
   let data = code - BASE_CODE;
-
   const ONSET_COUNT = 21;
   const NUCLEUS_COUNT = 28;
+
   let onset = Math.floor(data / (ONSET_COUNT * NUCLEUS_COUNT)) + 0x1100;
   let nucleus = (Math.floor(data / NUCLEUS_COUNT) % ONSET_COUNT) + 0x1161;
   let coda = (data % NUCLEUS_COUNT) + 0x11a7;

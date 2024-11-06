@@ -175,48 +175,50 @@ class WordDB:
 
             sql = f"""
                 WITH SelectedWords AS (
-                SELECT
-                    word,
-                    RIGHT(word, 1) AS last_char,
-                    CAST(calculate_value(word, '{mission}', 1) AS SIGNED) AS score,
-                    checked
-                FROM Word
-                WHERE {rangeSet}
-                {options}
-                ORDER BY score DESC
-                LIMIT 10
-            )
-            SELECT 
-            SelectedWords.word,
-            SelectedWords.score - (
-                SELECT
-                CAST(GREATEST(
-                    calculate_value(word, '가', 1),
-                    calculate_value(word, '나', 1),
-                    calculate_value(word, '다', 1),
-                    calculate_value(word, '라', 1),
-                    calculate_value(word, '마', 1),
-                    calculate_value(word, '바', 1),
-                    calculate_value(word, '사', 1),
-                    calculate_value(word, '아', 1),
-                    calculate_value(word, '자', 1),
-                    calculate_value(word, '차', 1),
-                    calculate_value(word, '카', 1),
-                    calculate_value(word, '타', 1),
-                    calculate_value(word, '파', 1),
-                    calculate_value(word, '하', 1)
-                ) AS SIGNED) AS max_score
-                FROM 
-                    Word
-                WHERE 
-                    word LIKE CONCAT(last_char, '%')
-                ORDER BY 
-                    max_score DESC
-                LIMIT 1
-            ) as value,
-            SelectedWords.checked
-            FROM SelectedWords
-            ORDER BY value DESC;
+                    SELECT
+                        word,
+                        RIGHT(word, 1) AS last_char,
+                        calculate_value(word, '{mission}', 1) AS score,
+                        checked,
+                        getDoumChar(RIGHT(word, 1)) AS doum_char
+                    FROM Word
+                    WHERE {rangeSet}
+                    {options}
+                    ORDER BY score DESC
+                    LIMIT 35
+                )
+                SELECT 
+                DISTINCT SelectedWords.word,
+                CAST(SelectedWords.score - (
+                    SELECT
+                    calculate_value_by_value(word, GREATEST(
+                        CountCharacter(word, '가'),
+                        CountCharacter(word, '나'),
+                        CountCharacter(word, '다'),
+                        CountCharacter(word, '라'),
+                        CountCharacter(word, '마'),
+                        CountCharacter(word, '바'),
+                        CountCharacter(word, '사'),
+                        CountCharacter(word, '아'),
+                        CountCharacter(word, '자'),
+                        CountCharacter(word, '차'),
+                        CountCharacter(word, '카'),
+                        CountCharacter(word, '타'),
+                        CountCharacter(word, '파'),
+                        CountCharacter(word, '하')
+                    ), 1) as max_score
+                    FROM 
+                        Word
+                    WHERE 
+                        word LIKE CONCAT(SelectedWords.last_char, '%') 
+                        OR word LIKE CONCAT(SelectedWords.doum_char, '%')
+                    ORDER BY 
+                        max_score DESC
+                    LIMIT 1
+                ) AS SIGNED) as value,
+                SelectedWords.checked
+                FROM SelectedWords
+                ORDER BY value DESC;
             """
             
         elif shMisType == 'theory':
@@ -462,22 +464,22 @@ class WordDB:
             sql = f"""
                 SELECT 
                 word,
-                CAST(GREATEST(
-                    calculate_value(word, '가', {chain}),
-                    calculate_value(word, '나', {chain}),
-                    calculate_value(word, '다', {chain}),
-                    calculate_value(word, '라', {chain}),
-                    calculate_value(word, '마', {chain}),
-                    calculate_value(word, '바', {chain}),
-                    calculate_value(word, '사', {chain}),
-                    calculate_value(word, '아', {chain}),
-                    calculate_value(word, '자', {chain}),
-                    calculate_value(word, '차', {chain}),
-                    calculate_value(word, '카', {chain}),
-                    calculate_value(word, '타', {chain}),
-                    calculate_value(word, '파', {chain}),
-                    calculate_value(word, '하', {chain})
-                ) AS SIGNED) AS max_score
+                CAST(calculate_value_by_value(word, GREATEST(
+                    CountCharacter(word, '가'),
+                    CountCharacter(word, '나'),
+                    CountCharacter(word, '다'),
+                    CountCharacter(word, '라'),
+                    CountCharacter(word, '마'),
+                    CountCharacter(word, '바'),
+                    CountCharacter(word, '사'),
+                    CountCharacter(word, '아'),
+                    CountCharacter(word, '자'),
+                    CountCharacter(word, '차'),
+                    CountCharacter(word, '카'),
+                    CountCharacter(word, '타'),
+                    CountCharacter(word, '파'),
+                    CountCharacter(word, '하')
+                ), 1) AS SIGNED) AS max_score
                 FROM 
                     Word
                 WHERE 
