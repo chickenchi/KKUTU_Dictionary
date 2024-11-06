@@ -305,7 +305,7 @@ const Main = () => {
           </Words>
         ));
       } else {
-        // score
+        // score & value
         words = wordList.map((word: any, index: any) => (
           <Words
             onClick={() => activeWSP([word[0], word[2]])}
@@ -536,7 +536,8 @@ const Main = () => {
             value={shMisType}
             onChange={handleSMTChange}
           >
-            <ShMisType value="score">점수순[30체인]</ShMisType>
+            <ShMisType value="value">이론적 가치순</ShMisType>
+            <ShMisType value="score">점수</ShMisType>
             <ShMisType value="theory">미션 + 장문순</ShMisType>
           </MissionType>
         )}

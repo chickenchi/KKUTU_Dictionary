@@ -155,7 +155,7 @@ class WordDB:
             sql = f"""
                 SELECT
                 word,
-                CAST(calculate_value(word, '{mission}', 30) AS SIGNED)
+                CAST(calculate_value(word, '{mission}', 1) AS SIGNED)
                 score,
                 checked
                 FROM Word
@@ -164,6 +164,61 @@ class WordDB:
                 ORDER BY score DESC
                 LIMIT 10;
             """
+        elif shMisType == 'value':
+            if not rangeSet:
+                rangeSet = f"""
+                (
+                    word LIKE '{front_initial1}%' OR
+                    word LIKE '{front_initial2}%'
+                )
+            """
+
+            sql = f"""
+                WITH SelectedWords AS (
+                SELECT
+                    word,
+                    RIGHT(word, 1) AS last_char,
+                    CAST(calculate_value(word, '{mission}', 1) AS SIGNED) AS score,
+                    checked
+                FROM Word
+                WHERE {rangeSet}
+                {options}
+                ORDER BY score DESC
+                LIMIT 10
+            )
+            SELECT 
+            SelectedWords.word,
+            SelectedWords.score - (
+                SELECT
+                CAST(GREATEST(
+                    calculate_value(word, '가', 1),
+                    calculate_value(word, '나', 1),
+                    calculate_value(word, '다', 1),
+                    calculate_value(word, '라', 1),
+                    calculate_value(word, '마', 1),
+                    calculate_value(word, '바', 1),
+                    calculate_value(word, '사', 1),
+                    calculate_value(word, '아', 1),
+                    calculate_value(word, '자', 1),
+                    calculate_value(word, '차', 1),
+                    calculate_value(word, '카', 1),
+                    calculate_value(word, '타', 1),
+                    calculate_value(word, '파', 1),
+                    calculate_value(word, '하', 1)
+                ) AS SIGNED) AS max_score
+                FROM 
+                    Word
+                WHERE 
+                    word LIKE CONCAT(last_char, '%')
+                ORDER BY 
+                    max_score DESC
+                LIMIT 1
+            ) as value,
+            SelectedWords.checked
+            FROM SelectedWords
+            ORDER BY value DESC;
+            """
+            
         elif shMisType == 'theory':
             if not rangeSet:
                 rangeSet = f"""
@@ -403,32 +458,72 @@ class WordDB:
                 )
             """
 
-        sql = f"""
-            SELECT 
-            word,
-            CAST(GREATEST(
-                calculate_value(word, '가', {chain}),
-                calculate_value(word, '나', {chain}),
-                calculate_value(word, '다', {chain}),
-                calculate_value(word, '라', {chain}),
-                calculate_value(word, '마', {chain}),
-                calculate_value(word, '바', {chain}),
-                calculate_value(word, '사', {chain}),
-                calculate_value(word, '아', {chain}),
-                calculate_value(word, '자', {chain}),
-                calculate_value(word, '차', {chain}),
-                calculate_value(word, '카', {chain}),
-                calculate_value(word, '타', {chain}),
-                calculate_value(word, '파', {chain}),
-                calculate_value(word, '하', {chain})
-            ) AS SIGNED) AS max_score
-        FROM 
-            Word
-        WHERE 
-            {rangeSet}
-        ORDER BY 
-            max_score DESC;
-        """
+        if '가' <= word[0] <= '힣':
+            sql = f"""
+                SELECT 
+                word,
+                CAST(GREATEST(
+                    calculate_value(word, '가', {chain}),
+                    calculate_value(word, '나', {chain}),
+                    calculate_value(word, '다', {chain}),
+                    calculate_value(word, '라', {chain}),
+                    calculate_value(word, '마', {chain}),
+                    calculate_value(word, '바', {chain}),
+                    calculate_value(word, '사', {chain}),
+                    calculate_value(word, '아', {chain}),
+                    calculate_value(word, '자', {chain}),
+                    calculate_value(word, '차', {chain}),
+                    calculate_value(word, '카', {chain}),
+                    calculate_value(word, '타', {chain}),
+                    calculate_value(word, '파', {chain}),
+                    calculate_value(word, '하', {chain})
+                ) AS SIGNED) AS max_score
+                FROM 
+                    Word
+                WHERE 
+                    {rangeSet}
+                ORDER BY 
+                    max_score DESC;
+            """
+        else:
+            sql = f"""
+                SELECT 
+                word,
+                CAST(GREATEST(
+                    calculate_value(word, 'a', {chain}),
+                    calculate_value(word, 'b', {chain}),
+                    calculate_value(word, 'c', {chain}),
+                    calculate_value(word, 'd', {chain}),
+                    calculate_value(word, 'e', {chain}),
+                    calculate_value(word, 'f', {chain}),
+                    calculate_value(word, 'g', {chain}),
+                    calculate_value(word, 'h', {chain}),
+                    calculate_value(word, 'i', {chain}),
+                    calculate_value(word, 'j', {chain}),
+                    calculate_value(word, 'k', {chain}),
+                    calculate_value(word, 'l', {chain}),
+                    calculate_value(word, 'm', {chain}),
+                    calculate_value(word, 'n', {chain}),
+                    calculate_value(word, 'o', {chain}),
+                    calculate_value(word, 'p', {chain}),
+                    calculate_value(word, 'q', {chain}),
+                    calculate_value(word, 'r', {chain}),
+                    calculate_value(word, 's', {chain}),
+                    calculate_value(word, 't', {chain}),
+                    calculate_value(word, 'u', {chain}),
+                    calculate_value(word, 'v', {chain}),
+                    calculate_value(word, 'w', {chain}),
+                    calculate_value(word, 'x', {chain}),
+                    calculate_value(word, 'y', {chain}),
+                    calculate_value(word, 'z', {chain})
+                ) AS SIGNED) AS max_score
+            FROM 
+                Word
+            WHERE 
+                {rangeSet}
+            ORDER BY 
+                max_score DESC;
+            """
 
         try:
             result = self.session.execute(text(sql)).fetchall()
