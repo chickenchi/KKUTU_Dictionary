@@ -242,6 +242,7 @@ const Main = () => {
 
   const handleSMTChange = (event: any) => {
     setShMisType(event.target.value);
+    setWordList([]);
   };
 
   const handleOpenSettingChange = () => {
@@ -537,7 +538,7 @@ const Main = () => {
             onChange={handleSMTChange}
           >
             <ShMisType value="value">이론적 가치순</ShMisType>
-            <ShMisType value="score">점수</ShMisType>
+            <ShMisType value="score">점수[30체인]</ShMisType>
             <ShMisType value="theory">미션 + 장문순</ShMisType>
           </MissionType>
         )}

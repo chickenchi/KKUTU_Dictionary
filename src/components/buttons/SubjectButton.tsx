@@ -11,7 +11,7 @@ const SubjectDiv = styled.div`
   background-color: white;
 
   height: 25px;
-  width: 160px;
+  width: 130px;
 
   margin-right: 5px;
 
@@ -30,7 +30,7 @@ const Subject = styled.input`
   background-color: white;
 
   height: 22px;
-  width: 130px;
+  width: 90px;
 
   padding-left: 5px;
 

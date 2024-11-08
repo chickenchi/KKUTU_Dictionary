@@ -200,11 +200,11 @@ const RadioContainer = styled.div`
   align-items: center;
 `;
 
-const RadioTitle = styled.p`
+const RadioTitle = styled.label`
   margin-left: 12px;
   margin-right: 8px;
 
-  font-size: 11pt;
+  font-size: 10pt;
 `;
 
 const Checkbox = styled.input`
@@ -213,6 +213,28 @@ const Checkbox = styled.input`
 
   font-family: "Pretendard";
 `;
+
+const TierNumber = styled.input`
+  width: 30px;
+  height: 18px;
+
+  margin-left: 10px;
+
+  font-size: 9pt;
+  text-align: center;
+`;
+
+const MissionType = styled.select`
+  width: 50px;
+  height: 18px;
+
+  margin-left: 5px;
+
+  font-size: 9pt;
+  font-family: "Pretendard";
+`;
+
+const ShMisType = styled.option``;
 
 const Console = styled.p`
   background-color: rgba(0, 0, 0, 0.1);
@@ -232,10 +254,12 @@ const Console = styled.p`
 
 const Practice = () => {
   const [answerCheck, setAnswerCheck] = useState<boolean>(true);
-  const [oneTierCheck, setOneTierCheck] = useState<boolean>(true);
+  const [onTierCheck, setOnTierCheck] = useState<boolean>(true);
+  const [currentTier, setCurrentTier] = useState<number>(1);
   const [changeMissionCheck, setChangeMissionCheck] = useState<boolean>(true);
   const [randomMissionCheck, setRandomMissionCheck] = useState<boolean>(false);
   const [resetMissionCheck, setResetMissionCheck] = useState<boolean>(false);
+  const [shMisType, setShMisType] = useState("theory");
 
   const [selectedOption, setSelectedOption] = useRecoilState(optionState);
   const [subjectOption, setSubjectOption] = useRecoilState(subjectState);
@@ -293,7 +317,7 @@ const Practice = () => {
           );
           writeLog(
             `[console] warning: 존재하지 않거나 10티어 안에 들지 않는 단어입니다.${
-              oneTierCheck ? `\n1티어는 ${first}입니다.` : ""
+              onTierCheck ? `\n${currentTier}티어는 ${first}입니다.` : ""
             }${
               answerCheck
                 ? `\n작성한 단어와 유사도가 높은 단어는 [${similarityWord}]입니다.
@@ -340,7 +364,7 @@ const Practice = () => {
           setAlarm("success", `위 단어는 ${tier}티어입니다.`);
           writeLog(
             `[console] success: 위 단어는 ${tier}티어입니다.${
-              oneTierCheck ? `\n1티어는 ${first}입니다.` : ""
+              onTierCheck ? `\n${currentTier}티어는 ${first}입니다.` : ""
             }`
           );
           break;
@@ -447,7 +471,7 @@ const Practice = () => {
         subject: subject,
         mission: missionValue,
         backWord: "",
-        shMisType: "theory",
+        shMisType: shMisType,
       });
 
       setWaiting(false);
@@ -458,7 +482,7 @@ const Practice = () => {
       }
 
       var tier: number = 0;
-      var first = selectedOption !== "villain" ? response.data[0][0] : "";
+      var first = response.data[currentTier - 1][0];
       var highSimilarity: [string, number, number] = ["", 0, 0];
 
       wordSearchLoop: for (tier = 0; tier < response.data.length; tier++) {
@@ -634,12 +658,20 @@ const Practice = () => {
     if (randomMissionCheck) changeMission();
   }, [randomMissionCheck]);
 
+  const handleSMTChange = (event: any) => {
+    setShMisType(event.target.value);
+  };
+
   const handleCheckChange = () => {
     setAnswerCheck(!answerCheck);
   };
 
   const handleOneTierChange = () => {
-    setOneTierCheck(!oneTierCheck);
+    setOnTierCheck(!onTierCheck);
+  };
+
+  const handleCurrentTierChange = (e: any) => {
+    setCurrentTier(e.target.value);
   };
 
   const handleChangeMissionChange = () => {
@@ -694,7 +726,7 @@ const Practice = () => {
           <SubjectButton />
 
           <RadioContainer>
-            <RadioTitle>분석 허용</RadioTitle>
+            <RadioTitle>분석</RadioTitle>
           </RadioContainer>
 
           <Checkbox
@@ -704,17 +736,38 @@ const Practice = () => {
           />
 
           <RadioContainer>
-            <RadioTitle>1티어 공개</RadioTitle>
+            <RadioTitle>티어</RadioTitle>
           </RadioContainer>
 
           <Checkbox
             type="checkbox"
             onClick={handleOneTierChange}
-            checked={oneTierCheck}
+            checked={onTierCheck}
           />
 
+          {onTierCheck && (
+            <>
+              <TierNumber
+                value={currentTier}
+                onChange={handleCurrentTierChange}
+                placeholder="티어"
+              />
+
+              <MissionType
+                id="shMisType"
+                name="shMisType"
+                value={shMisType}
+                onChange={handleSMTChange}
+              >
+                <ShMisType value="value">이론</ShMisType>
+                <ShMisType value="score">점수</ShMisType>
+                <ShMisType value="theory">개수</ShMisType>
+              </MissionType>
+            </>
+          )}
+
           <RadioContainer>
-            <RadioTitle>미션 변경</RadioTitle>
+            <RadioTitle>변경</RadioTitle>
           </RadioContainer>
 
           <Checkbox
@@ -726,7 +779,7 @@ const Practice = () => {
           {changeMissionCheck && !resetMissionCheck && (
             <>
               <RadioContainer>
-                <RadioTitle>랜덤 미션</RadioTitle>
+                <RadioTitle>랜덤</RadioTitle>
               </RadioContainer>
 
               <Checkbox
@@ -740,7 +793,7 @@ const Practice = () => {
           {changeMissionCheck && !randomMissionCheck && (
             <>
               <RadioContainer>
-                <RadioTitle>모르면 처음부터</RadioTitle>
+                <RadioTitle>하드</RadioTitle>
               </RadioContainer>
 
               <Checkbox

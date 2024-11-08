@@ -155,7 +155,7 @@ class WordDB:
             sql = f"""
                 SELECT
                 word,
-                CAST(calculate_value(word, '{mission}', 1) AS SIGNED)
+                CAST(calculate_value(word, '{mission}', 30) AS SIGNED)
                 score,
                 checked
                 FROM Word
