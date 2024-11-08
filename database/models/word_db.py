@@ -172,54 +172,127 @@ class WordDB:
                     word LIKE '{front_initial2}%'
                 )
             """
-
-            sql = f"""
-                WITH SelectedWords AS (
-                    SELECT
-                        word,
-                        RIGHT(word, 1) AS last_char,
-                        calculate_value(word, '{mission}', 1) AS score,
-                        checked,
-                        getDoumChar(RIGHT(word, 1)) AS doum_char
-                    FROM Word
-                    WHERE {rangeSet}
-                    {options}
-                    ORDER BY score DESC
-                    LIMIT 35
-                )
-                SELECT 
-                DISTINCT SelectedWords.word,
-                CAST(SelectedWords.score - (
-                    SELECT
-                    calculate_value_by_value(word, GREATEST(
-                        CountCharacter(word, '가'),
-                        CountCharacter(word, '나'),
-                        CountCharacter(word, '다'),
-                        CountCharacter(word, '라'),
-                        CountCharacter(word, '마'),
-                        CountCharacter(word, '바'),
-                        CountCharacter(word, '사'),
-                        CountCharacter(word, '아'),
-                        CountCharacter(word, '자'),
-                        CountCharacter(word, '차'),
-                        CountCharacter(word, '카'),
-                        CountCharacter(word, '타'),
-                        CountCharacter(word, '파'),
-                        CountCharacter(word, '하')
-                    ), 1) as max_score
-                    FROM 
-                        Word
-                    WHERE 
-                        word LIKE CONCAT(SelectedWords.last_char, '%') 
-                        OR word LIKE CONCAT(SelectedWords.doum_char, '%')
-                    ORDER BY 
-                        max_score DESC
-                    LIMIT 1
-                ) AS SIGNED) as value,
-                SelectedWords.checked
-                FROM SelectedWords
-                ORDER BY value DESC;
-            """
+                
+            if '가' <= front_initial1 <= '힣':
+                sql = f"""
+                    WITH SelectedWords AS (
+                        SELECT
+                            word,
+                            RIGHT(word, 1) AS last_char,
+                            calculate_value(word, '{mission}', 1) AS score,
+                            checked,
+                            getDoumChar(RIGHT(word, 1)) AS doum_char
+                        FROM Word
+                        WHERE {rangeSet}
+                        {options}
+                        ORDER BY score DESC
+                        LIMIT 35
+                    )
+                    SELECT 
+                    DISTINCT SelectedWords.word,
+                    CAST(SelectedWords.score - (
+                        SELECT
+                            CASE 
+                                WHEN INSTR(SelectedWords.word, '{mission}') > 0 THEN
+                                    -- `mission`이 포함된 경우 기존 로직 사용
+                                    calculate_value_by_value(word, GREATEST(
+                                        CountCharacter(word, '가'),
+                                        CountCharacter(word, '나'),
+                                        CountCharacter(word, '다'),
+                                        CountCharacter(word, '라'),
+                                        CountCharacter(word, '마'),
+                                        CountCharacter(word, '바'),
+                                        CountCharacter(word, '사'),
+                                        CountCharacter(word, '아'),
+                                        CountCharacter(word, '자'),
+                                        CountCharacter(word, '차'),
+                                        CountCharacter(word, '카'),
+                                        CountCharacter(word, '타'),
+                                        CountCharacter(word, '파'),
+                                        CountCharacter(word, '하')
+                                    ), 1)
+                                ELSE
+                                    -- `mission`이 포함되지 않은 경우 단순히 `mission` 문자 수 계산
+                                    calculate_value_by_value(word, CountCharacter(word, '{mission}'), 1)
+                            END AS max_score
+                        FROM 
+                            Word
+                        WHERE
+                            ( word LIKE CONCAT(SelectedWords.last_char, '%') 
+                            OR word LIKE CONCAT(SelectedWords.doum_char, '%') )
+                            AND word NOT LIKE SelectedWords.word
+                        ORDER BY 
+                            max_score DESC
+                        LIMIT 1
+                    ) AS SIGNED) as value,
+                    SelectedWords.checked
+                    FROM SelectedWords
+                    ORDER BY value DESC;
+                """
+            else:
+                sql = f"""
+                    WITH SelectedWords AS (
+                        SELECT
+                            word,
+                            RIGHT(word, 1) AS last_char,
+                            calculate_value(word, '{mission}', 1) AS score,
+                            checked,
+                            getDoumChar(RIGHT(word, 1)) AS doum_char
+                        FROM Word
+                        WHERE 
+                            {rangeSet}
+                            {options}
+                        AND
+                            word REGEXP 'z$|j$|y$|q$|w$|r$|x$|g$|v$|k$|l$'
+                        ORDER BY score DESC
+                        LIMIT 20
+                    )
+                    SELECT 
+                    DISTINCT SelectedWords.word,
+                    CAST(SelectedWords.score - (
+                        SELECT
+                        calculate_value_by_value(word, GREATEST(
+                            CountCharacter(word, 'a'),
+                            CountCharacter(word, 'b'),
+                            CountCharacter(word, 'c'),
+                            CountCharacter(word, 'd'),
+                            CountCharacter(word, 'e'),
+                            CountCharacter(word, 'f'),
+                            CountCharacter(word, 'g'),
+                            CountCharacter(word, 'h'),
+                            CountCharacter(word, 'i'),
+                            CountCharacter(word, 'j'),
+                            CountCharacter(word, 'k'),
+                            CountCharacter(word, 'l'),
+                            CountCharacter(word, 'm'),
+                            CountCharacter(word, 'n'),
+                            CountCharacter(word, 'o'),
+                            CountCharacter(word, 'p'),
+                            CountCharacter(word, 'q'),
+                            CountCharacter(word, 'r'),
+                            CountCharacter(word, 's'),
+                            CountCharacter(word, 't'),
+                            CountCharacter(word, 'u'),
+                            CountCharacter(word, 'v'),
+                            CountCharacter(word, 'w'),
+                            CountCharacter(word, 'x'),
+                            CountCharacter(word, 'y'),
+                            CountCharacter(word, 'z')
+                        ), 1) as max_score
+                        FROM 
+                            Word
+                        WHERE
+                            ( word LIKE CONCAT(SelectedWords.last_char, '%') 
+                            OR word LIKE CONCAT(SelectedWords.doum_char, '%') )
+                            AND word NOT LIKE SelectedWords.word
+                        ORDER BY 
+                            max_score DESC
+                        LIMIT 1
+                    ) AS SIGNED) as value,
+                    SelectedWords.checked
+                    FROM SelectedWords
+                    ORDER BY value DESC;
+                """
             
         elif shMisType == 'theory':
             if not rangeSet:
