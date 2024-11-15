@@ -4,16 +4,16 @@ class WordService:
     def __init__(self):
         self.word_db = WordDB()
 
-    def find_word(self, dto):
+    async def find_word(self, dto):
         if dto.type == "mission":
             if dto.shMisType == "theory":
-                words = [[s[0], s[1], s[2], s[3]] for s in self.word_db.find_word(dto)]
+                words = [[s[0], s[1], s[2], s[3]] for s in await self.word_db.find_word(dto)]
             else:
-                words = [[s[0], s[1], s[2]] for s in self.word_db.find_word(dto)]
+                words = [[s[0], s[1], s[2]] for s in await self.word_db.find_word(dto)]
         elif dto.type == "allMission":
-            words = [[s[0], s[1]] for s in self.word_db.find_word(dto)]
+            words = [[s[0], s[1]] for s in await self.word_db.find_word(dto)]
         else:
-            words = [[s[0], s[2]] for s in self.word_db.find_word(dto)]
+            words = [[s[0], s[2]] for s in await self.word_db.find_word(dto)]
 
         if len(words) == 0:
             return "단어 없음"

@@ -8,7 +8,7 @@ word_blueprint = Blueprint('word', __name__)
 word_service = WordService()
 
 @word_blueprint.route('/word', methods=["POST"])
-def find_word():
+async def find_word():
     dto = WordDTO(
         word=request.json['word'],
         type=request.json['type'],
@@ -19,7 +19,7 @@ def find_word():
         checklist=request.json.get('checklist', None),
         tier=request.json.get('tier', 1),
     )
-    return jsonify(word_service.find_word(dto))
+    return jsonify(await word_service.find_word(dto))
 
 @word_blueprint.route('/precise_word', methods=["POST"])
 def precise_find_word():

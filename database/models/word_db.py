@@ -1,11 +1,21 @@
-from sqlalchemy import create_engine, text
+from sqlalchemy import text
+from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 class WordDB:
     def setting(self):
-        engine = create_engine('mysql+pymysql://root:1234@localhost/KKUTU')
-        Session = sessionmaker(bind=engine)
-        self.session = Session()
+        self.engine = create_async_engine(
+            'mysql+aiomysql://root:1234@localhost/KKUTU',
+            echo=False,
+            future=True
+        )
+        
+        # 비동기 세션 생성
+        self.session = sessionmaker(
+            bind=self.engine,
+            expire_on_commit=False,
+            class_=AsyncSession
+        )
         print("connect ok")
 
     def __init__(self):
@@ -31,7 +41,7 @@ class WordDB:
         }
         return ranges.get(first_letter, (None, None))
     
-    def find_word(self, dto):
+    async def find_word(self, dto):
         first_letter = dto.word[0]
         item_letter = dto.word[1]
 
@@ -65,7 +75,10 @@ class WordDB:
         if dto.type == 'attack':
             sql = self.attack(first_letter, item_letter, rangeSet, options)
         elif dto.type == 'mission':
-            sql = self.mission(first_letter, item_letter, dto.mission, rangeSet, dto.shMisType, options)
+            if dto.shMisType == 'value':
+                return await self.valueMission(first_letter, item_letter, dto.mission, rangeSet, options)
+            
+            sql = await self.mission(first_letter, item_letter, dto.mission, rangeSet, dto.shMisType, options)
         elif dto.type == 'allMission':
             sql = self.allMission(first_letter, item_letter, rangeSet, dto.tier, options)
         elif dto.type == 'protect':
@@ -75,8 +88,9 @@ class WordDB:
         elif dto.type == 'long':
             sql = self.long(first_letter, item_letter, rangeSet, options)
 
-        result = self.session.execute(text(sql)).fetchall()
-        return result
+        async with self.session() as session:
+            query = await session.execute(text(sql))
+            return query.fetchall()
     
     def attack(self, front_initial1, front_initial2, rangeSet, options):
         if not rangeSet:
@@ -101,7 +115,7 @@ class WordDB:
             """
         return sql
         
-    def mission(self, front_initial1, front_initial2, mission, rangeSet, shMisType, options):
+    async def mission(self, front_initial1, front_initial2, mission, rangeSet, shMisType, options):
         if mission == "":
             if not rangeSet:
                 rangeSet = f"""
@@ -164,136 +178,6 @@ class WordDB:
                 ORDER BY score DESC
                 LIMIT 10;
             """
-        elif shMisType == 'value':
-            if not rangeSet:
-                rangeSet = f"""
-                (
-                    word LIKE '{front_initial1}%' OR
-                    word LIKE '{front_initial2}%'
-                )
-            """
-                
-            if '가' <= front_initial1 <= '힣':
-                sql = f"""
-                    WITH SelectedWords AS (
-                        SELECT
-                            word,
-                            RIGHT(word, 1) AS last_char,
-                            calculate_value(word, '{mission}', 1) AS score,
-                            checked,
-                            getDoumChar(RIGHT(word, 1)) AS doum_char
-                        FROM Word
-                        WHERE {rangeSet}
-                        {options}
-                        ORDER BY score DESC
-                        LIMIT 35
-                    )
-                    SELECT 
-                    DISTINCT SelectedWords.word,
-                    CAST(SelectedWords.score - (
-                        SELECT
-                            CASE 
-                                WHEN INSTR(SelectedWords.word, '{mission}') > 0 THEN
-                                    -- `mission`이 포함된 경우 기존 로직 사용
-                                    calculate_value_by_value(word, GREATEST(
-                                        CountCharacter(word, '가'),
-                                        CountCharacter(word, '나'),
-                                        CountCharacter(word, '다'),
-                                        CountCharacter(word, '라'),
-                                        CountCharacter(word, '마'),
-                                        CountCharacter(word, '바'),
-                                        CountCharacter(word, '사'),
-                                        CountCharacter(word, '아'),
-                                        CountCharacter(word, '자'),
-                                        CountCharacter(word, '차'),
-                                        CountCharacter(word, '카'),
-                                        CountCharacter(word, '타'),
-                                        CountCharacter(word, '파'),
-                                        CountCharacter(word, '하')
-                                    ), 1)
-                                ELSE
-                                    -- `mission`이 포함되지 않은 경우 단순히 `mission` 문자 수 계산
-                                    calculate_value_by_value(word, CountCharacter(word, '{mission}'), 1)
-                            END AS max_score
-                        FROM 
-                            Word
-                        WHERE
-                            ( word LIKE CONCAT(SelectedWords.last_char, '%') 
-                            OR word LIKE CONCAT(SelectedWords.doum_char, '%') )
-                            AND word NOT LIKE SelectedWords.word
-                        ORDER BY 
-                            max_score DESC
-                        LIMIT 1
-                    ) AS SIGNED) as value,
-                    SelectedWords.checked
-                    FROM SelectedWords
-                    ORDER BY value DESC;
-                """
-            else:
-                sql = f"""
-                    WITH SelectedWords AS (
-                        SELECT
-                            word,
-                            RIGHT(word, 1) AS last_char,
-                            calculate_value(word, '{mission}', 1) AS score,
-                            checked,
-                            getDoumChar(RIGHT(word, 1)) AS doum_char
-                        FROM Word
-                        WHERE 
-                            {rangeSet}
-                            {options}
-                        AND
-                            word REGEXP 'z$|j$|y$|q$|w$|r$|x$|g$|v$|k$|l$'
-                        ORDER BY score DESC
-                        LIMIT 20
-                    )
-                    SELECT 
-                    DISTINCT SelectedWords.word,
-                    CAST(SelectedWords.score - (
-                        SELECT
-                        calculate_value_by_value(word, GREATEST(
-                            CountCharacter(word, 'a'),
-                            CountCharacter(word, 'b'),
-                            CountCharacter(word, 'c'),
-                            CountCharacter(word, 'd'),
-                            CountCharacter(word, 'e'),
-                            CountCharacter(word, 'f'),
-                            CountCharacter(word, 'g'),
-                            CountCharacter(word, 'h'),
-                            CountCharacter(word, 'i'),
-                            CountCharacter(word, 'j'),
-                            CountCharacter(word, 'k'),
-                            CountCharacter(word, 'l'),
-                            CountCharacter(word, 'm'),
-                            CountCharacter(word, 'n'),
-                            CountCharacter(word, 'o'),
-                            CountCharacter(word, 'p'),
-                            CountCharacter(word, 'q'),
-                            CountCharacter(word, 'r'),
-                            CountCharacter(word, 's'),
-                            CountCharacter(word, 't'),
-                            CountCharacter(word, 'u'),
-                            CountCharacter(word, 'v'),
-                            CountCharacter(word, 'w'),
-                            CountCharacter(word, 'x'),
-                            CountCharacter(word, 'y'),
-                            CountCharacter(word, 'z')
-                        ), 1) as max_score
-                        FROM 
-                            Word
-                        WHERE
-                            ( word LIKE CONCAT(SelectedWords.last_char, '%') 
-                            OR word LIKE CONCAT(SelectedWords.doum_char, '%') )
-                            AND word NOT LIKE SelectedWords.word
-                        ORDER BY 
-                            max_score DESC
-                        LIMIT 1
-                    ) AS SIGNED) as value,
-                    SelectedWords.checked
-                    FROM SelectedWords
-                    ORDER BY value DESC;
-                """
-            
         elif shMisType == 'theory':
             if not rangeSet:
                 rangeSet = f"""
@@ -320,6 +204,195 @@ class WordDB:
             """
 
         return sql
+    
+    async def get_initial_data(self, back_initial):
+        sql = f"""
+            SELECT *
+            FROM initialScore
+            WHERE initial = '{back_initial}'
+        """
+        
+        async with self.session() as session:
+            try:
+                query = await session.execute(text(sql))
+                return query.fetchall()
+            
+            except Exception as e:
+                print(f"Error: {e}")
+                await self.session.rollback()
+                return ["error", "문제가 발생하였습니다."]
+
+    async def get_calculated_value(self, back_initial, chain):
+        if '가' <= back_initial <= '힣':
+            sql = f"""
+                SELECT 
+                    word,
+                    CAST(calculate_value_by_value(word, GREATEST(
+                        CountCharacter(word, '가'),
+                        CountCharacter(word, '나'),
+                        CountCharacter(word, '다'),
+                        CountCharacter(word, '라'),
+                        CountCharacter(word, '마'),
+                        CountCharacter(word, '바'),
+                        CountCharacter(word, '사'),
+                        CountCharacter(word, '아'),
+                        CountCharacter(word, '자'),
+                        CountCharacter(word, '차'),
+                        CountCharacter(word, '카'),
+                        CountCharacter(word, '타'),
+                        CountCharacter(word, '파'),
+                        CountCharacter(word, '하')
+                    ), 1) AS SIGNED) AS max_score
+                FROM 
+                    Word
+                WHERE 
+                    word LIKE '{back_initial}%'
+                    OR word LIKE CONCAT(getDoumChar('{back_initial}'), '%')
+                ORDER BY 
+                    max_score DESC
+                LIMIT 1;
+            """
+        else:
+            sql = f"""
+                SELECT 
+                    word,
+                    CAST(GREATEST(
+                        calculate_value(word, 'a', {chain}),
+                        calculate_value(word, 'b', {chain}),
+                        calculate_value(word, 'c', {chain}),
+                        calculate_value(word, 'd', {chain}),
+                        calculate_value(word, 'e', {chain}),
+                        calculate_value(word, 'f', {chain}),
+                        calculate_value(word, 'g', {chain}),
+                        calculate_value(word, 'h', {chain}),
+                        calculate_value(word, 'i', {chain}),
+                        calculate_value(word, 'j', {chain}),
+                        calculate_value(word, 'k', {chain}),
+                        calculate_value(word, 'l', {chain}),
+                        calculate_value(word, 'm', {chain}),
+                        calculate_value(word, 'n', {chain}),
+                        calculate_value(word, 'o', {chain}),
+                        calculate_value(word, 'p', {chain}),
+                        calculate_value(word, 'q', {chain}),
+                        calculate_value(word, 'r', {chain}),
+                        calculate_value(word, 's', {chain}),
+                        calculate_value(word, 't', {chain}),
+                        calculate_value(word, 'u', {chain}),
+                        calculate_value(word, 'v', {chain}),
+                        calculate_value(word, 'w', {chain}),
+                        calculate_value(word, 'x', {chain}),
+                        calculate_value(word, 'y', {chain}),
+                        calculate_value(word, 'z', {chain})
+                    ) AS SIGNED) AS max_score
+                FROM 
+                    Word
+                WHERE 
+                    word LIKE '{back_initial}%'
+                    OR word LIKE CONCAT(getDoumChar('{back_initial}'), '%')
+                ORDER BY 
+                    max_score DESC
+                LIMIT 1;
+            """
+        async with self.session() as session:
+            try:
+                query = await session.execute(text(sql))
+                result = query.fetchall()
+                if result == []:
+                    await self.saveBackWordScore(back_initial, 0)
+                else:
+                    await self.saveBackWordScore(back_initial, result[0][1])
+                return result
+
+            except Exception as e:
+                print(f"Error: {e}")
+                await self.session.rollback()
+                return ["error", "문제가 발생하였습니다."]
+            
+    async def saveBackWordScore(self, back_initial, score):
+        sql = f"""
+            INSERT INTO initialScore
+            VALUES('{back_initial}', '{score}')
+        """
+
+        print(sql)
+
+        try:
+            async with self.session() as session:  # session 인스턴스를 명시적으로 사용
+                async with session.begin():  # 세션을 시작하고 트랜잭션을 처리
+                    result = await session.execute(text(sql))
+                    print(f"Rows affected: {result.rowcount}")
+        except Exception as e:
+            print(f"Error: {e}")
+
+    async def valueMission(self, front_initial1, front_initial2, mission, rangeSet, options):
+        chain = 1
+        if not rangeSet:
+            rangeSet = f"""
+            (
+                LEFT(word, 1) = '{front_initial1}'
+                OR LEFT(word, 1) = '{front_initial2}'
+            )
+        """
+        
+        sql = f"""
+            SELECT RIGHT(word, 1)
+            FROM Word
+            WHERE {rangeSet}
+            {options}
+        """
+        result = []
+
+        async with self.session() as session:
+            query = await session.execute(text(sql))
+            result = query.fetchall()
+
+        rsList = {}
+        
+        for back_initial in result:
+            back_initial = back_initial[0]
+            res = await self.get_initial_data(back_initial)
+            
+            if res != []:
+                rsList[back_initial] = res[0][1]
+            else:
+                rs = await self.get_calculated_value(back_initial, chain)
+                if rs == []:
+                    rsList[back_initial] = 0
+                else:
+                    rsList[back_initial] = rs[0][1]
+
+        sql = f"""
+            SELECT
+                word,
+                CAST(calculate_value(word, '{mission}', 30) AS SIGNED) AS score,
+                RIGHT(word, 1) AS last_char,
+                checked,
+                getDoumChar(RIGHT(word, 1)) AS doum_char
+            FROM Word
+            WHERE {rangeSet}
+            {options}
+        """
+
+        res = []
+        
+        async with self.session() as session:
+            try:
+                query = await session.execute(text(sql))
+                res = query.fetchall()
+
+            except Exception as e:
+                print(f"Error: {e}")
+                await self.session.rollback()
+                return ["error", "문제가 발생하였습니다."]
+
+        for i, resultValue in enumerate(res):
+            resultValue = list(resultValue)
+            resultValue[1] -= rsList[resultValue[2]]
+            resultValue[0] += "(-" + str(rsList[resultValue[2]]) + ")"
+            res[i] = tuple(resultValue)
+
+        return sorted(res, key=lambda x: x[1], reverse=True)
+
     
     def allMission(self, front_initial1, front_initial2, rangeSet, tier, options):
         if not rangeSet:
