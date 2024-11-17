@@ -22,62 +22,62 @@ async def find_word():
     return jsonify(await word_service.find_word(dto))
 
 @word_blueprint.route('/precise_word', methods=["POST"])
-def precise_find_word():
+async def precise_find_word():
     word = request.json['word']
-    return jsonify(word_service.precise_find_word(word))
+    return jsonify(await word_service.precise_find_word(word))
 
 @word_blueprint.route('/initial_max_score', methods=["POST"])
-def initial_max_score():
+async def initial_max_score():
     word = request.json['word']
     chain = request.json['chain']
     dto = {'word': word, 'chain': chain}
-    return jsonify(word_service.initial_max_score(dto))
+    return jsonify(await word_service.initial_max_score(dto))
 
 @word_blueprint.route('/insert', methods=["POST"])
-def insert_word():
+async def insert_word():
     word = request.json['word']
     subject = request.json['subject']
     dto = {'word': word, 'subject': subject}
-    return word_service.insert_word(dto)
+    return await word_service.insert_word(dto)
 
 @word_blueprint.route('/delete', methods=["POST"])
-def delete_word(): 
-    return word_service.delete_word(request.json['word'])
+async def delete_word(): 
+    return await word_service.delete_word(request.json['word'])
 
 @word_blueprint.route('/known', methods=["POST"])
-def known_word(): 
-    return word_service.known_word(request.json['word'], request.json['checked'])
+async def known_word(): 
+    return await word_service.known_word(request.json['word'], request.json['checked'])
 
 @word_blueprint.route('/current_phrase', methods=["POST"])
-def current_phrase():
-    return jsonify(word_service.current_phrase(request.json['word']))
+async def current_phrase():
+    return jsonify(await word_service.current_phrase(request.json['word']))
 
 @word_blueprint.route('/reme_phrase', methods=["POST"])
-def remember_phrase():
-    return word_service.remember_phrase(request.json['word'], request.json['phrase'])
+async def remember_phrase():
+    return await word_service.remember_phrase(request.json['word'], request.json['phrase'])
 
 @word_blueprint.route('/uread', methods=["POST"])
-def uread():
+async def uread():
     dto = UreadDTO(
         words=request.json['words'],
         isRead=request.json['isRead']
     )
-    return word_service.uread(dto)
+    return await word_service.uread(dto)
 
 @word_blueprint.route('/mission_word', methods=["POST"])
-def mission_word():
+async def mission_word():
     dto = MissionDTO(
         initial=request.json['initial'],
         shMisType=request.json['shMisType']
     )
-    return jsonify(word_service.mission_word(dto))
+    return jsonify(await word_service.mission_word(dto))
 
 # AttackPattern Workspace
 
 @word_blueprint.route('/all_word', methods=["POST"])
-def all_word():
-    return jsonify(word_service.all_word())
+async def all_word():
+    return jsonify(await word_service.all_word())
 
 @word_blueprint.route('/initial', methods=["POST"])
-def initial():
-    return jsonify(word_service.initial())
+async def initial():
+    return jsonify(await word_service.initial())
