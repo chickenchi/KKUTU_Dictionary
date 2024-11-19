@@ -535,8 +535,7 @@ const Memo = () => {
 
           setAlarm(response.data[0], response.data[1]);
 
-          if (response.data[0] === "success" || response.data[0] === "warning")
-            search();
+          if (response.data[0] === "warning") search();
         } catch (error) {
           console.log(error);
         }
