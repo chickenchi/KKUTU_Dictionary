@@ -482,11 +482,11 @@ const Practice = () => {
       }
 
       var tier: number = 0;
-      var first = response.data[currentTier - 1][0];
+      var first = response.data[currentTier - 1][0].split("(")[0];
       var highSimilarity: [string, number, number] = ["", 0, 0];
 
       wordSearchLoop: for (tier = 0; tier < response.data.length; tier++) {
-        var word = response.data[tier][0];
+        var word = response.data[tier][0].split("(")[0];
         var similarity: number = jaccardSimilarity(word, answer);
 
         if (highSimilarity[1] < similarity)
