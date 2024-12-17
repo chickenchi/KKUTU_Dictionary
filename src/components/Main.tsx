@@ -497,14 +497,25 @@ const Main = () => {
         <SearchContainer>
           <SearchTitle>단어 찾기</SearchTitle>
 
-          <Word
-            type="text"
-            value={wordValue}
-            placeholder="앞 글자 입력"
-            onChange={handleWordChange}
-            onKeyDown={handleKeyDown}
-            ref={wordRef}
-          />
+          {selectedOption === "protect" ? (
+            <Word
+              type="text"
+              value={wordValue}
+              placeholder="포함 글자 입력"
+              onChange={handleWordChange}
+              onKeyDown={handleKeyDown}
+              ref={wordRef}
+            />
+          ) : (
+            <Word
+              type="text"
+              value={wordValue}
+              placeholder="앞 글자 입력"
+              onChange={handleWordChange}
+              onKeyDown={handleKeyDown}
+              ref={wordRef}
+            />
+          )}
           {selectedOption === "villain" && (
             <Word
               type="text"

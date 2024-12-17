@@ -55,7 +55,6 @@ const Attack = styled.input`
   width: 85px;
   height: 100%;
 
-  padding-left: 5px;
   margin-right: 5px;
 
   text-align: center;

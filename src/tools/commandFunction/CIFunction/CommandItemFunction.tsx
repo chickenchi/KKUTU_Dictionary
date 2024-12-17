@@ -8,6 +8,8 @@ import { setWord } from "../innerComFunction/WordSet";
 import { useWord } from "../../wordFunction/WordProvider";
 import { UreadingWord } from "../innerComFunction/Ureading";
 import { useWaiting } from "../../waitFunction/WaitProvider";
+import { wordValueState } from "../../../Atom";
+import { useRecoilState } from "recoil";
 
 export const countOccurrences = (str: string, subStr: string) => {
   return str.split(subStr).length - 1;
@@ -29,8 +31,7 @@ const CommandItemFunction = ({
   setPrompt,
 }: CommandItemFunction) => {
   const { setAlarm } = useAlarm();
-  const { visible, hideCommandManager } = useCommand();
-  const { wordValue, setWordValue } = useWord();
+  const [wordValue, setWordValue] = useRecoilState(wordValueState);
 
   const handleWordSet = async () => {
     const result = await setWord(prompt);

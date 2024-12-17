@@ -6,6 +6,8 @@ import { Alarm } from "../tools/alarmFunction/AlarmManager";
 import { useAlarm } from "../tools/alarmFunction/AlarmProvider";
 import { useWord } from "../tools/wordFunction/WordProvider";
 import { useWaiting } from "../tools/waitFunction/WaitProvider";
+import { useRecoilState } from "recoil";
+import { wordValueState } from "../Atom";
 
 const Section = styled.div`
   background-color: rgb(250, 250, 250);
@@ -338,7 +340,7 @@ const Memo = () => {
 
   const [memoTitle, setMemoTitle] = useState<string>("");
   const [memoSubtitle, setMemoSubtitle] = useState<string>("");
-  const { wordValue, setWordValue } = useWord();
+  const [wordValue, setWordValue] = useRecoilState(wordValueState);
 
   const [memoNumber, setMemoNumber] = useState<number>(0);
   const [memoDBIndex, setMemoDBIndex] = useState<number>(0);

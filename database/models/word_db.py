@@ -571,8 +571,8 @@ class WordDB:
         if not rangeSet:
             rangeSet = f"""
                 (
-                    word LIKE '{front_initial1}%' OR
-                    word LIKE '{front_initial2}%'
+                    word LIKE '%{front_initial1}%' OR
+                    word LIKE '%{front_initial2}%'
                 )
             """
 

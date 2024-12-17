@@ -15,3 +15,8 @@ export const subjectState = atom({
   key: "subjectState",
   default: "주제 없음",
 });
+
+export const wordValueState = atom<string>({
+  key: "wordValueState",
+  default: "",
+});
