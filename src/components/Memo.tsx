@@ -498,8 +498,6 @@ const Memo = () => {
   };
 
   const search = async () => {
-    setMemoNumber(0);
-
     try {
       setWaiting(true);
 
@@ -537,7 +535,7 @@ const Memo = () => {
 
           setAlarm(response.data[0], response.data[1]);
 
-          if (response.data[0] === "warning") search();
+          if (response.data[0] === "success") search();
         } catch (error) {
           console.log(error);
         }
