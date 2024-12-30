@@ -1,23 +1,11 @@
-from sqlalchemy import text
-from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
 
 class WordDB:
     def setting(self):
-        self.engine = create_async_engine(
-            "mysql+aiomysql://root:1234@localhost/KKUTU", 
-            echo=False,
-            pool_size=10,  # 풀에 유지될 커넥션 수
-            max_overflow=20,  # 풀에서 초과할 수 있는 커넥션 수
-            pool_timeout=160,  # 커넥션 풀에서 커넥션을 기다리는 최대 시간
-        )
-
-        # 비동기 세션 생성
-        self.session = sessionmaker(
-            bind=self.engine,
-            expire_on_commit=False,
-            class_=AsyncSession,
-        )
+        engine = create_engine('mysql+pymysql://root:1234@localhost/KKUTU')
+        Session = sessionmaker(bind=engine)
+        self.session = Session()
         print("connect ok")
 
     def __init__(self):
@@ -43,14 +31,7 @@ class WordDB:
         }
         return ranges.get(first_letter, (None, None))
     
-    async def debug_session(self, session):
-        print(f"Session Type: {type(session)}")
-        if not hasattr(session, 'send'):
-            print("session does not have send method")
-        else:
-            print("session has send method")
-
-    async def find_word(self, dto):
+    def find_word(self, dto):
         first_letter = dto.word[0]
         item_letter = dto.word[1]
 
@@ -85,8 +66,7 @@ class WordDB:
             sql = self.attack(first_letter, item_letter, rangeSet, options)
         elif dto.type == 'mission':
             if dto.shMisType == 'value':
-                return await self.valueMission(first_letter, item_letter, dto.mission, rangeSet, options)
-            
+                return self.valueMission(first_letter, item_letter, dto.mission, rangeSet, options)
             sql = self.mission(first_letter, item_letter, dto.mission, rangeSet, dto.shMisType, options)
         elif dto.type == 'allMission':
             sql = self.allMission(first_letter, item_letter, rangeSet, dto.tier, options)
@@ -97,16 +77,8 @@ class WordDB:
         elif dto.type == 'long':
             sql = self.long(first_letter, item_letter, rangeSet, options)
 
-        session = self.session()
-
-        try:
-            query = await session.execute(text(sql))
-            result = query.fetchall()
-            return result
-        
-        except Exception as e:
-            print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
+        result = self.session.execute(text(sql)).fetchall()
+        return result
     
     def attack(self, front_initial1, front_initial2, rangeSet, options):
         if not rangeSet:
@@ -185,7 +157,7 @@ class WordDB:
             sql = f"""
                 SELECT
                 word,
-                CAST(calculate_value(word, '{mission}', 30) AS SIGNED)
+                CAST(calculate_value(word, '{mission}', 1) AS SIGNED)
                 score,
                 checked
                 FROM Word
@@ -194,6 +166,61 @@ class WordDB:
                 ORDER BY score DESC
                 LIMIT 10;
             """
+        elif shMisType == 'value':
+            if not rangeSet:
+                rangeSet = f"""
+                (
+                    word LIKE '{front_initial1}%' OR
+                    word LIKE '{front_initial2}%'
+                )
+            """
+
+            sql = f"""
+                WITH SelectedWords AS (
+                SELECT
+                    word,
+                    RIGHT(word, 1) AS last_char,
+                    CAST(calculate_value(word, '{mission}', 1) AS SIGNED) AS score,
+                    checked
+                FROM Word
+                WHERE {rangeSet}
+                {options}
+                ORDER BY score DESC
+                LIMIT 10
+            )
+            SELECT 
+            SelectedWords.word,
+            SelectedWords.score - (
+                SELECT
+                CAST(GREATEST(
+                    calculate_value(word, '가', 1),
+                    calculate_value(word, '나', 1),
+                    calculate_value(word, '다', 1),
+                    calculate_value(word, '라', 1),
+                    calculate_value(word, '마', 1),
+                    calculate_value(word, '바', 1),
+                    calculate_value(word, '사', 1),
+                    calculate_value(word, '아', 1),
+                    calculate_value(word, '자', 1),
+                    calculate_value(word, '차', 1),
+                    calculate_value(word, '카', 1),
+                    calculate_value(word, '타', 1),
+                    calculate_value(word, '파', 1),
+                    calculate_value(word, '하', 1)
+                ) AS SIGNED) AS max_score
+                FROM 
+                    Word
+                WHERE 
+                    word LIKE CONCAT(last_char, '%')
+                ORDER BY 
+                    max_score DESC
+                LIMIT 1
+            ) as value,
+            SelectedWords.checked
+            FROM SelectedWords
+            ORDER BY value DESC;
+            """
+            
         elif shMisType == 'theory':
             if not rangeSet:
                 rangeSet = f"""
@@ -221,23 +248,22 @@ class WordDB:
 
         return sql
     
-    async def get_initial_data(self, back_initial):
+    def get_initial_data(self, back_initial):
         sql = f"""
             SELECT *
             FROM initialScore
             WHERE initial = '{back_initial}'
         """
     
-        async with self.session() as session:
-            try:
-                query = await session.execute(text(sql))
-                return query.fetchall()
-            
-            except Exception as e:
-                print(f"Error: {e}")
-                return ["문제가 발생하였습니다."]
+        try:
+            result = self.session.execute(text(sql)).fetchall()
+            return result
+        
+        except Exception as e:
+            print(f"Error: {e}")
+            return ["문제가 발생하였습니다."]
 
-    async def get_calculated_value(self, back_initial, chain):
+    def get_calculated_value(self, back_initial, chain):
         if '가' <= back_initial <= '힣':
             sql = f"""
                 SELECT 
@@ -309,52 +335,50 @@ class WordDB:
                 LIMIT 1;
             """
     
-        async with self.session() as session:
-            try:
-                query = await session.execute(text(sql))
-                result = query.fetchall()
-                if result == []:
-                    await self.saveBackWordScore(back_initial, 0)
-                else:
-                    await self.saveBackWordScore(back_initial, result[0][1])
-                return result
+        try:
+            result = self.session.execute(text(sql)).fetchall()
 
-            except Exception as e:
-                print(f"Error: {e}")
-                return ["문제가 발생하였습니다."]  
+            if result == []:
+                self.saveBackWordScore(back_initial, 0)
+            else:
+                self.saveBackWordScore(back_initial, result[0][1])
+            return result
 
-    async def saveBackWordScore(self, back_initial, score):
+        except Exception as e:
+            print(f"Error: {e}")
+            return ["문제가 발생하였습니다."]  
+
+    def saveBackWordScore(self, back_initial, score):
         sql = f"""
             INSERT INTO initialScore
             VALUES('{back_initial}', '{score}')
         """
 
-        async with self.session() as session:
-            try:
-                result = await session.execute(text(sql))
-                await session.commit()
-                print(f"Rows affected: {result.rowcount}")
-            except Exception as e:
-                await session.rollback()
-                print(f"Error: {e}")
+        try:
+            result = self.session.execute(text(sql))
+            self.session.commit()
+            print(f"Rows affected: {result}")
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error: {e}")
      
-    async def removeBackWordScore(self, back_initial):
+    def removeBackWordScore(self, back_initial):
         sql = f"""
             DELETE FROM initialScore
             WHERE word = '{back_initial}'
         """
 
-        async with self.session() as session:
-            try:
-                result = await session.execute(text(sql))
-                await session.commit()
-                print(f"Rows affected: {result.rowcount}")
-            except Exception as e:
-                await session.rollback()
-                print(f"Error: {e}")
+        try:
+            result = self.session.execute(text(sql))
+            self.session.commit()
+            print(f"Rows affected: {result}")
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error: {e}")
 
-    async def valueMission(self, front_initial1, front_initial2, mission, rangeSet, options):
+    def valueMission(self, front_initial1, front_initial2, mission, rangeSet, options):
         chain = 1
+
         if not rangeSet:
             rangeSet = f"""
             (
@@ -369,29 +393,27 @@ class WordDB:
             WHERE {rangeSet}
             {options}
         """
+
         result = []
 
-        async with self.session() as session:
-            try:
-                query = await session.execute(text(sql))
-                result = query.fetchall()
+        try:
+            result = self.session.execute(text(sql)).fetchall()
 
-            except Exception as e:
-                print(f"Error: {e}")
-                return ["문제가 발생하였습니다."]
-
-        session = self.session()
-
+        except Exception as e:
+            print(f"Error: {e}")
+            return ["문제가 발생하였습니다."]
+        
         rsList = {}
         
         for back_initial in result:
             back_initial = back_initial[0]
-            res = await self.get_initial_data(back_initial)
+            res = self.get_initial_data(back_initial)
 
             if res != []:
                 rsList[back_initial] = res[0][1]
             else:
-                rs = await self.get_calculated_value(back_initial, chain)
+                rs = self.get_calculated_value(back_initial, chain)
+                
                 if rs == []:
                     rsList[back_initial] = 0
                 else:
@@ -400,7 +422,7 @@ class WordDB:
         sql = f"""
             SELECT
                 word,
-                CAST(calculate_value(word, '{mission}', 30) AS SIGNED) AS score,
+                CAST(calculate_value(word, '{mission}', 1) AS SIGNED) AS score,
                 RIGHT(word, 1) AS last_char,
                 checked,
                 getDoumChar(RIGHT(word, 1)) AS doum_char
@@ -411,14 +433,12 @@ class WordDB:
 
         res = []
         
-        async with self.session() as session:
-            try:
-                query = await session.execute(text(sql))
-                res = query.fetchall()
-
-            except Exception as e:
-                print(f"Error: {e}")
-                return ["문제가 발생하였습니다."]
+        try:
+            res = self.session.execute(text(sql)).fetchall()
+        
+        except Exception as e:
+            print(f"Error: {e}")
+            return ["문제가 발생하였습니다."]
 
         for i in range(len(res) - 1, -1, -1):
             resultValue = res[i]
@@ -431,7 +451,6 @@ class WordDB:
                 res[i] = tuple(resultValue)
 
         return sorted(res, key=lambda x: x[1], reverse=True)
-
     
     def allMission(self, front_initial1, front_initial2, rangeSet, tier, options):
         if not rangeSet:
@@ -571,8 +590,8 @@ class WordDB:
         if not rangeSet:
             rangeSet = f"""
                 (
-                    word LIKE '%{front_initial1}%' OR
-                    word LIKE '%{front_initial2}%'
+                    word LIKE '{front_initial1}%' OR
+                    word LIKE '{front_initial2}%'
                 )
             """
 
@@ -609,7 +628,7 @@ class WordDB:
         
         return sql
     
-    async def precise_find_word(self, word):
+    def precise_find_word(self, word):
         sql = """
         SELECT word, checked
         FROM word
@@ -617,16 +636,14 @@ class WordDB:
         """.format(word)
 
         try:
-            async with self.session() as session:
-                query = await session.execute(text(sql))
-                result = query.fetchall()
-                return result
+            result = self.session.execute(text(sql)).fetchall()
+            return result
         except Exception as e:
+            self.session.rollback()
             print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
+            return ["error", "문제가 발생하였습니다."]
         
-        
-    async def initial_max_score(self, dto):
+    def initial_max_score(self, dto):
         rangeSet = ""
 
         word = dto['word']
@@ -651,22 +668,22 @@ class WordDB:
             sql = f"""
                 SELECT 
                 word,
-                CAST(calculate_value_by_value(word, GREATEST(
-                    CountCharacter(word, '가'),
-                    CountCharacter(word, '나'),
-                    CountCharacter(word, '다'),
-                    CountCharacter(word, '라'),
-                    CountCharacter(word, '마'),
-                    CountCharacter(word, '바'),
-                    CountCharacter(word, '사'),
-                    CountCharacter(word, '아'),
-                    CountCharacter(word, '자'),
-                    CountCharacter(word, '차'),
-                    CountCharacter(word, '카'),
-                    CountCharacter(word, '타'),
-                    CountCharacter(word, '파'),
-                    CountCharacter(word, '하')
-                ), 1) AS SIGNED) AS max_score
+                CAST(GREATEST(
+                    calculate_value(word, '가', {chain}),
+                    calculate_value(word, '나', {chain}),
+                    calculate_value(word, '다', {chain}),
+                    calculate_value(word, '라', {chain}),
+                    calculate_value(word, '마', {chain}),
+                    calculate_value(word, '바', {chain}),
+                    calculate_value(word, '사', {chain}),
+                    calculate_value(word, '아', {chain}),
+                    calculate_value(word, '자', {chain}),
+                    calculate_value(word, '차', {chain}),
+                    calculate_value(word, '카', {chain}),
+                    calculate_value(word, '타', {chain}),
+                    calculate_value(word, '파', {chain}),
+                    calculate_value(word, '하', {chain})
+                ) AS SIGNED) AS max_score
                 FROM 
                     Word
                 WHERE 
@@ -715,64 +732,57 @@ class WordDB:
             """
 
         try:
-            async with self.session() as session:
-                query = await session.execute(text(sql))
-                result = query.fetchall()
-                return result
+            result = self.session.execute(text(sql)).fetchall()
+            return result
         except Exception as e:
+            self.session.rollback()
             print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
-        
+            return ["error", "문제가 발생하였습니다."]
     
-    async def insert_word(self, dto):
+    def insert_word(self, dto):
         subjects = dto['subject'] if dto['subject'] != 'all' else "X"
         words = dto['word']
 
         sql = text(f"INSERT IGNORE INTO Word VALUES (:word, :subject, 0, '')")
 
         try:
-            async with self.session() as session:  # session 인스턴스를 명시적으로 사용
-                async with session.begin():  # 세션을 시작하고 트랜잭션을 처리
-                    result = await session.execute(
-                    sql, 
-                    [
-                        {'word': w, 'subject': s} 
-                        for w, s in zip(words, subjects)
-                    ]
-                    )
-
-                    affected_rows = result.rowcount
-                    if affected_rows == 0:
-                        return ["warning", "이미 추가된 단어입니다."]
-                    else:
-                        return ["success", f"{affected_rows}개의 단어가 추가되었습니다."]
+            result = self.session.execute(
+              sql, 
+              [
+                {'word': w, 'subject': s} 
+                for w, s in zip(words, subjects)
+              ]
+            )
+            self.session.commit()
+            affected_rows = result.rowcount
+            if affected_rows == 0:
+                return ["warning", "이미 추가된 단어입니다."]
+            else:
+                return ["success", f"{affected_rows}개의 단어가 추가되었습니다."]
         except Exception as e:
+            self.session.rollback()
             print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
+            return ["error", "문제가 발생하였습니다."]
         
-        
-    async def delete_word(self, word):
+    def delete_word(self, word):
         words = word
 
         sql = text("DELETE FROM Word WHERE word = (:word)")
 
         try:
-            async with self.session() as session:
-                async with session.begin():
-                    result = await session.execute(sql, [{'word': w} for w in words])
-
-                    affected_rows = result.rowcount
-                    if affected_rows == 0:
-                        return ["warning", "존재하지 않는 단어입니다."]
-                    else:
-                        return ["success", f"{affected_rows}개의 단어가 삭제되었습니다."]
-                    
+            result = self.session.execute(sql, [{'word': w} for w in words])
+            self.session.commit()
+            affected_rows = result.rowcount
+            if affected_rows == 0:
+                return ["warning", "존재하지 않는 단어입니다."]
+            else:
+                return ["success", f"{affected_rows}개의 단어가 삭제되었습니다."]
         except Exception as e:
+            self.session.rollback()
             print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
+            return ["error", "문제가 발생하였습니다."]
         
-        
-    async def known_word(self, word, checked):
+    def known_word(self, word, checked):
         sql = """
         UPDATE Word
         SET checked = '{1}'
@@ -780,16 +790,15 @@ class WordDB:
         """.format(word, 1 - checked)
 
         try:
-            async with self.session() as session: 
-                async with session.begin(): 
-                    await session.execute(text(sql))
-                    return ["success", "표시 완료."]
+            self.session.execute(text(sql))
+            self.session.commit()
+            return ["success", "표시 완료."]
         except Exception as e:
+            self.session.rollback()
             print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
+            return ["error", "문제가 발생하였습니다."]
         
-        
-    async def remember_phrase(self, word, phrase):
+    def remember_phrase(self, word, phrase):
         sql = """
         UPDATE Word
         SET sentence = '{1}'
@@ -797,16 +806,15 @@ class WordDB:
         """.format(word, phrase)
 
         try:
-            async with self.session() as session:
-                async with session.begin(): 
-                    await session.execute(text(sql))
-                    return ["success", "표시 완료."]
+            self.session.execute(text(sql))
+            self.session.commit()
+            return ["success", "표시 완료."]
         except Exception as e:
+            self.session.rollback()
             print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
+            return ["error", "문제가 발생하였습니다."]
         
-        
-    async def current_phrase(self, word):
+    def current_phrase(self, word):
         sql = """
         SELECT sentence
         FROM word
@@ -814,16 +822,14 @@ class WordDB:
         """.format(word)
 
         try:
-            async with self.session() as session:
-                query = await session.execute(text(sql))
-                result = query.fetchall()
-                return result
+            result = self.session.execute(text(sql)).fetchall()
+            return result
         except Exception as e:
+            self.session.rollback()
             print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
+            return ["error", "문제가 발생하였습니다."]
         
-        
-    async def uread(self, dto):
+    def uread(self, dto):
         try:
             if isinstance(dto.words, str):
                 # 단일 문자열인 경우
@@ -832,11 +838,7 @@ class WordDB:
                     SET checked = :isRead
                     WHERE word = :word
                 """
-                async with self.session() as session:
-                    query = await session.execute(text(sql), {"isRead": dto.isRead, "word": dto.words})
-                    result = query.fetchall()
-                    return result
-                
+                self.session.execute(text(sql), {"isRead": dto.isRead, "word": dto.words})
             else:
                 # 리스트인 경우
                 for word in dto.words:
@@ -847,19 +849,16 @@ class WordDB:
                         SET checked = :isRead
                         WHERE word = :word
                     """
+                    self.session.execute(text(sql), {"isRead": dto.isRead, "word": word})
 
-                    async with self.session() as session:
-                        query = await session.execute(text(sql), {"isRead": dto.isRead, "word": word})
-                        result = query.fetchall()
-                        return result
-                    
+            self.session.commit()
             return ["success", "설정 완료."]
         except Exception as e:
+            self.session.rollback()
             print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
-        
+            return ["error", "문제가 발생하였습니다."]
 
-    async def mission_word(self, dto):
+    def mission_word(self, dto):
         # word, initial
         missionInitials = "가나다라마바사아자차카타파하"
         words = {"가": [], "나": [], "다": [], "라": [],
@@ -889,19 +888,18 @@ class WordDB:
                 """
 
                 try:
-                    async with self.session() as session:
-                        query = await session.execute(text(sql))
-                        result = query.fetchall()
-                        words[mi] = [list(row) for row in result]
+                    result = self.session.execute(text(sql)).fetchall()
+                    words[mi] = [list(row) for row in result]
                 except Exception as e:
+                    self.session.rollback()
                     print(f"Error: {e}")
-                    return ["문제가 발생하였습니다."]
+                    return ["error", "문제가 발생하였습니다."]
             
             return words
         else:
             return "아직 지원하지 않습니다."
         
-    async def all_word(self):
+    def all_word(self):
         sql = f"""
         SELECT *
         FROM word
@@ -910,27 +908,23 @@ class WordDB:
         """
 
         try:
-            async with self.session() as session:
-                query = await session.execute(text(sql))
-                result = query.fetchall()
-                return result
+            result = self.session.execute(text(sql)).fetchall()
+            return result
         except Exception as e:
+            self.session.rollback()
             print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
+            return ["error", "문제가 발생하였습니다."]
         
-        
-    async def initial(self):
+    def initial(self):
         sql = f"""
         SELECT *
         FROM LoseInitial;
         """
 
         try:
-            async with self.session() as session:
-                query = await session.execute(text(sql))
-                result = query.fetchall()
-                return result
+            result = self.session.execute(text(sql)).fetchall()
+            return result
         except Exception as e:
+            self.session.rollback()
             print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
-        
+            return ["error", "문제가 발생하였습니다."]
