@@ -65,9 +65,16 @@ class WordDB:
         if dto.type == 'attack':
             sql = self.attack(first_letter, item_letter, rangeSet, options)
         elif dto.type == 'mission':
+            sql = f"""
+                SELECT first_letter_count('{first_letter}');
+            """
+
+            count = self.session.execute(text(sql)).fetchall()
+            count = count[0][0]
+            
             if dto.shMisType == 'value':
-                return self.valueMission(first_letter, item_letter, dto.mission, rangeSet, options)
-            sql = self.mission(first_letter, item_letter, dto.mission, rangeSet, dto.shMisType, options)
+                return self.valueMission(count, first_letter, item_letter, dto.mission, rangeSet, options)
+            sql = self.mission(count, first_letter, item_letter, dto.mission, rangeSet, dto.shMisType, options)
         elif dto.type == 'allMission':
             sql = self.allMission(first_letter, item_letter, rangeSet, dto.tier, options)
         elif dto.type == 'protect':
@@ -103,7 +110,7 @@ class WordDB:
             """
         return sql
         
-    def mission(self, front_initial1, front_initial2, mission, rangeSet, shMisType, options):
+    def mission(self, count, front_initial1, front_initial2, mission, rangeSet, shMisType, options):
         if mission == "":
             if not rangeSet:
                 rangeSet = f"""
@@ -157,7 +164,7 @@ class WordDB:
             sql = f"""
                 SELECT
                 word,
-                CAST(calculate_value(word, '{mission}', 1) AS SIGNED)
+                CAST(calculate_value(word, '{mission}', 1, {count}) AS SIGNED)
                 score,
                 checked
                 FROM Word
@@ -180,7 +187,7 @@ class WordDB:
                 SELECT
                     word,
                     RIGHT(word, 1) AS last_char,
-                    CAST(calculate_value(word, '{mission}', 1) AS SIGNED) AS score,
+                    CAST(calculate_value(word, '{mission}', 1, {count}) AS SIGNED) AS score,
                     checked
                 FROM Word
                 WHERE {rangeSet}
@@ -193,20 +200,20 @@ class WordDB:
             SelectedWords.score - (
                 SELECT
                 CAST(GREATEST(
-                    calculate_value(word, '가', 1),
-                    calculate_value(word, '나', 1),
-                    calculate_value(word, '다', 1),
-                    calculate_value(word, '라', 1),
-                    calculate_value(word, '마', 1),
-                    calculate_value(word, '바', 1),
-                    calculate_value(word, '사', 1),
-                    calculate_value(word, '아', 1),
-                    calculate_value(word, '자', 1),
-                    calculate_value(word, '차', 1),
-                    calculate_value(word, '카', 1),
-                    calculate_value(word, '타', 1),
-                    calculate_value(word, '파', 1),
-                    calculate_value(word, '하', 1)
+                    calculate_value(word, '가', 1, {count}),
+                    calculate_value(word, '나', 1, {count}),
+                    calculate_value(word, '다', 1, {count}),
+                    calculate_value(word, '라', 1, {count}),
+                    calculate_value(word, '마', 1, {count}),
+                    calculate_value(word, '바', 1, {count}),
+                    calculate_value(word, '사', 1, {count}),
+                    calculate_value(word, '아', 1, {count}),
+                    calculate_value(word, '자', 1, {count}),
+                    calculate_value(word, '차', 1, {count}),
+                    calculate_value(word, '카', 1, {count}),
+                    calculate_value(word, '타', 1, {count}),
+                    calculate_value(word, '파', 1, {count}),
+                    calculate_value(word, '하', 1, {count})
                 ) AS SIGNED) AS max_score
                 FROM 
                     Word
@@ -263,7 +270,7 @@ class WordDB:
             print(f"Error: {e}")
             return ["문제가 발생하였습니다."]
 
-    def get_calculated_value(self, back_initial, chain):
+    def get_calculated_value(self, count, back_initial, chain):
         if '가' <= back_initial <= '힣':
             sql = f"""
                 SELECT 
@@ -283,7 +290,7 @@ class WordDB:
                         CountCharacter(word, '타'),
                         CountCharacter(word, '파'),
                         CountCharacter(word, '하')
-                    ), 1) AS SIGNED) AS max_score
+                    ), 1, {count}) AS SIGNED) AS max_score
                 FROM 
                     Word
                 WHERE 
@@ -298,32 +305,32 @@ class WordDB:
                 SELECT 
                     word,
                     CAST(GREATEST(
-                        calculate_value(word, 'a', {chain}),
-                        calculate_value(word, 'b', {chain}),
-                        calculate_value(word, 'c', {chain}),
-                        calculate_value(word, 'd', {chain}),
-                        calculate_value(word, 'e', {chain}),
-                        calculate_value(word, 'f', {chain}),
-                        calculate_value(word, 'g', {chain}),
-                        calculate_value(word, 'h', {chain}),
-                        calculate_value(word, 'i', {chain}),
-                        calculate_value(word, 'j', {chain}),
-                        calculate_value(word, 'k', {chain}),
-                        calculate_value(word, 'l', {chain}),
-                        calculate_value(word, 'm', {chain}),
-                        calculate_value(word, 'n', {chain}),
-                        calculate_value(word, 'o', {chain}),
-                        calculate_value(word, 'p', {chain}),
-                        calculate_value(word, 'q', {chain}),
-                        calculate_value(word, 'r', {chain}),
-                        calculate_value(word, 's', {chain}),
-                        calculate_value(word, 't', {chain}),
-                        calculate_value(word, 'u', {chain}),
-                        calculate_value(word, 'v', {chain}),
-                        calculate_value(word, 'w', {chain}),
-                        calculate_value(word, 'x', {chain}),
-                        calculate_value(word, 'y', {chain}),
-                        calculate_value(word, 'z', {chain})
+                        calculate_value(word, 'a', {chain}, {count}),
+                        calculate_value(word, 'b', {chain}, {count}),
+                        calculate_value(word, 'c', {chain}, {count}),
+                        calculate_value(word, 'd', {chain}, {count}),
+                        calculate_value(word, 'e', {chain}, {count}),
+                        calculate_value(word, 'f', {chain}, {count}),
+                        calculate_value(word, 'g', {chain}, {count}),
+                        calculate_value(word, 'h', {chain}, {count}),
+                        calculate_value(word, 'i', {chain}, {count}),
+                        calculate_value(word, 'j', {chain}, {count}),
+                        calculate_value(word, 'k', {chain}, {count}),
+                        calculate_value(word, 'l', {chain}, {count}),
+                        calculate_value(word, 'm', {chain}, {count}),
+                        calculate_value(word, 'n', {chain}, {count}),
+                        calculate_value(word, 'o', {chain}, {count}),
+                        calculate_value(word, 'p', {chain}, {count}),
+                        calculate_value(word, 'q', {chain}, {count}),
+                        calculate_value(word, 'r', {chain}, {count}),
+                        calculate_value(word, 's', {chain}, {count}),
+                        calculate_value(word, 't', {chain}, {count}),
+                        calculate_value(word, 'u', {chain}, {count}),
+                        calculate_value(word, 'v', {chain}, {count}),
+                        calculate_value(word, 'w', {chain}, {count}),
+                        calculate_value(word, 'x', {chain}, {count}),
+                        calculate_value(word, 'y', {chain}, {count}),
+                        calculate_value(word, 'z', {chain}, {count})
                     ) AS SIGNED) AS max_score
                 FROM 
                     Word
@@ -376,7 +383,7 @@ class WordDB:
             self.session.rollback()
             print(f"Error: {e}")
 
-    def valueMission(self, front_initial1, front_initial2, mission, rangeSet, options):
+    def valueMission(self, count, front_initial1, front_initial2, mission, rangeSet, options):
         chain = 1
 
         if not rangeSet:
@@ -412,7 +419,7 @@ class WordDB:
             if res != []:
                 rsList[back_initial] = res[0][1]
             else:
-                rs = self.get_calculated_value(back_initial, chain)
+                rs = self.get_calculated_value(count, back_initial, chain)
                 
                 if rs == []:
                     rsList[back_initial] = 0
@@ -422,7 +429,7 @@ class WordDB:
         sql = f"""
             SELECT
                 word,
-                CAST(calculate_value(word, '{mission}', 1) AS SIGNED) AS score,
+                CAST(calculate_value(word, '{mission}', 1, {count}) AS SIGNED) AS score,
                 RIGHT(word, 1) AS last_char,
                 checked,
                 getDoumChar(RIGHT(word, 1)) AS doum_char
@@ -655,6 +662,13 @@ class WordDB:
             rangeSet = f"""
                 word >= '{start}' AND word <= '{end}'
             """
+
+        sql = f"""
+            SELECT first_letter_count('{word[0]}')
+        """
+
+        count = self.session.execute(text(sql)).fetchall()
+        count = count[0][0]
         
         if not rangeSet:
             rangeSet = f"""
@@ -669,20 +683,20 @@ class WordDB:
                 SELECT 
                 word,
                 CAST(GREATEST(
-                    calculate_value(word, '가', {chain}),
-                    calculate_value(word, '나', {chain}),
-                    calculate_value(word, '다', {chain}),
-                    calculate_value(word, '라', {chain}),
-                    calculate_value(word, '마', {chain}),
-                    calculate_value(word, '바', {chain}),
-                    calculate_value(word, '사', {chain}),
-                    calculate_value(word, '아', {chain}),
-                    calculate_value(word, '자', {chain}),
-                    calculate_value(word, '차', {chain}),
-                    calculate_value(word, '카', {chain}),
-                    calculate_value(word, '타', {chain}),
-                    calculate_value(word, '파', {chain}),
-                    calculate_value(word, '하', {chain})
+                    calculate_value(word, '가', {chain}, {count}),
+                    calculate_value(word, '나', {chain}, {count}),
+                    calculate_value(word, '다', {chain}, {count}),
+                    calculate_value(word, '라', {chain}, {count}),
+                    calculate_value(word, '마', {chain}, {count}),
+                    calculate_value(word, '바', {chain}, {count}),
+                    calculate_value(word, '사', {chain}, {count}),
+                    calculate_value(word, '아', {chain}, {count}),
+                    calculate_value(word, '자', {chain}, {count}),
+                    calculate_value(word, '차', {chain}, {count}),
+                    calculate_value(word, '카', {chain}, {count}),
+                    calculate_value(word, '타', {chain}, {count}),
+                    calculate_value(word, '파', {chain}, {count}),
+                    calculate_value(word, '하', {chain}, {count})
                 ) AS SIGNED) AS max_score
                 FROM 
                     Word
@@ -696,32 +710,32 @@ class WordDB:
                 SELECT 
                 word,
                 CAST(GREATEST(
-                    calculate_value(word, 'a', {chain}),
-                    calculate_value(word, 'b', {chain}),
-                    calculate_value(word, 'c', {chain}),
-                    calculate_value(word, 'd', {chain}),
-                    calculate_value(word, 'e', {chain}),
-                    calculate_value(word, 'f', {chain}),
-                    calculate_value(word, 'g', {chain}),
-                    calculate_value(word, 'h', {chain}),
-                    calculate_value(word, 'i', {chain}),
-                    calculate_value(word, 'j', {chain}),
-                    calculate_value(word, 'k', {chain}),
-                    calculate_value(word, 'l', {chain}),
-                    calculate_value(word, 'm', {chain}),
-                    calculate_value(word, 'n', {chain}),
-                    calculate_value(word, 'o', {chain}),
-                    calculate_value(word, 'p', {chain}),
-                    calculate_value(word, 'q', {chain}),
-                    calculate_value(word, 'r', {chain}),
-                    calculate_value(word, 's', {chain}),
-                    calculate_value(word, 't', {chain}),
-                    calculate_value(word, 'u', {chain}),
-                    calculate_value(word, 'v', {chain}),
-                    calculate_value(word, 'w', {chain}),
-                    calculate_value(word, 'x', {chain}),
-                    calculate_value(word, 'y', {chain}),
-                    calculate_value(word, 'z', {chain})
+                    calculate_value(word, 'a', {chain}, {count}),
+                    calculate_value(word, 'b', {chain}, {count}),
+                    calculate_value(word, 'c', {chain}, {count}),
+                    calculate_value(word, 'd', {chain}, {count}),
+                    calculate_value(word, 'e', {chain}, {count}),
+                    calculate_value(word, 'f', {chain}, {count}),
+                    calculate_value(word, 'g', {chain}, {count}),
+                    calculate_value(word, 'h', {chain}, {count}),
+                    calculate_value(word, 'i', {chain}, {count}),
+                    calculate_value(word, 'j', {chain}, {count}),
+                    calculate_value(word, 'k', {chain}, {count}),
+                    calculate_value(word, 'l', {chain}, {count}),
+                    calculate_value(word, 'm', {chain}, {count}),
+                    calculate_value(word, 'n', {chain}, {count}),
+                    calculate_value(word, 'o', {chain}, {count}),
+                    calculate_value(word, 'p', {chain}, {count}),
+                    calculate_value(word, 'q', {chain}, {count}),
+                    calculate_value(word, 'r', {chain}, {count}),
+                    calculate_value(word, 's', {chain}, {count}),
+                    calculate_value(word, 't', {chain}, {count}),
+                    calculate_value(word, 'u', {chain}, {count}),
+                    calculate_value(word, 'v', {chain}, {count}),
+                    calculate_value(word, 'w', {chain}, {count}),
+                    calculate_value(word, 'x', {chain}, {count}),
+                    calculate_value(word, 'y', {chain}, {count}),
+                    calculate_value(word, 'z', {chain}, {count})
                 ) AS SIGNED) AS max_score
             FROM 
                 Word
