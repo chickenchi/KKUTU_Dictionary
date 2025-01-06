@@ -208,6 +208,7 @@ const Main = () => {
 
   const [isTenSec, setIsTenSec] = useState<boolean>(false);
   const [isKnown, setIsKnown] = useState<boolean>(false);
+  const [isInjeong, setIsInjeong] = useState<boolean>(false);
 
   const [wordList, setWordList] = useState<string[]>([]);
 
@@ -255,6 +256,10 @@ const Main = () => {
 
   const handleIsKnownChange = () => {
     setIsKnown(!isKnown);
+  };
+
+  const handleIsInjeongChange = () => {
+    setIsInjeong(!isInjeong);
   };
 
   useEffect(() => {
@@ -344,7 +349,7 @@ const Main = () => {
         initialList = [wordValue, wordValue];
       }
 
-      let checklist = [isTenSec, isKnown];
+      let checklist = [isTenSec, isKnown, isInjeong];
 
       setWaiting(true);
 
@@ -487,6 +492,12 @@ const Main = () => {
               checked={isKnown}
             />
             <Label htmlFor="memorize">암기한 단어</Label>
+            <Checkbox
+              type="checkbox"
+              onChange={handleIsInjeongChange}
+              checked={isInjeong}
+            />
+            <Label htmlFor="memorize">노인정</Label>
           </RadioContainer>
 
           <SettingButton onClick={handleOpenSettingChange}>

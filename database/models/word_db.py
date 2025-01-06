@@ -46,6 +46,7 @@ class WordDB:
         options = ""
         isTenSec = dto.checklist[0] if dto.checklist and len(dto.checklist) > 0 else False
         isKnown = dto.checklist[1] if dto.checklist and len(dto.checklist) > 1 else False
+        isInjeong = dto.checklist[2] if dto.checklist and len(dto.checklist) > 1 else False
         subject = dto.subject
 
         if first_letter != '' and first_letter in 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ':
@@ -59,6 +60,8 @@ class WordDB:
             options += "AND CHAR_LENGTH(word) < 11\n"
         if isKnown:
             options += "AND checked = true\n"
+        if isInjeong:
+            options += "AND injeong = false\n"
         if subject != "all":
             options += f"AND subject = '{subject}'"
 
@@ -761,9 +764,9 @@ class WordDB:
 
         try:
             result = self.session.execute(
-              sql, 
+              sql,
               [
-                {'word': w, 'subject': s} 
+                {'word': w, 'subject': s}
                 for w, s in zip(words, subjects)
               ]
             )

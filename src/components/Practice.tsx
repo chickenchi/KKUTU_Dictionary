@@ -259,6 +259,7 @@ const Practice = () => {
   const [changeMissionCheck, setChangeMissionCheck] = useState<boolean>(true);
   const [randomMissionCheck, setRandomMissionCheck] = useState<boolean>(false);
   const [resetMissionCheck, setResetMissionCheck] = useState<boolean>(false);
+  const [injeongCheck, setInjeongCheck] = useState<boolean>(false);
   const [shMisType, setShMisType] = useState("theory");
 
   const [selectedOption, setSelectedOption] = useRecoilState(optionState);
@@ -465,6 +466,8 @@ const Practice = () => {
 
       const subject = getValueByLabel(subjectOption);
 
+      let checklist = [false, false, injeongCheck];
+
       let response = await axios.post("http://127.0.0.1:5000/word", {
         word: initialList,
         type: selectedOption,
@@ -472,6 +475,7 @@ const Practice = () => {
         mission: missionValue,
         backWord: "",
         shMisType: shMisType,
+        checklist: checklist,
       });
 
       setWaiting(false);
@@ -525,6 +529,8 @@ const Practice = () => {
 
       const subject = getValueByLabel(subjectOption);
 
+      let checklist = [false, false, injeongCheck];
+
       const response = await axios.post("http://127.0.0.1:5000/word", {
         word: ["", ""],
         type: selectedOption,
@@ -532,6 +538,7 @@ const Practice = () => {
         mission: "",
         backWord: missionValue,
         shMisType: "theory",
+        checklist: checklist,
       });
 
       setWaiting(false);
@@ -598,6 +605,8 @@ const Practice = () => {
 
           const subject = getValueByLabel(subjectOption);
 
+          let checklist = [false, false, injeongCheck];
+
           let response = await axios.post("http://127.0.0.1:5000/word", {
             word: initialList,
             type: selectedOption,
@@ -605,6 +614,7 @@ const Practice = () => {
             mission: missionValue,
             backWord: "",
             shMisType: "theory",
+            checklist: checklist,
           });
 
           setWaiting(false);
@@ -660,6 +670,10 @@ const Practice = () => {
 
   const handleSMTChange = (event: any) => {
     setShMisType(event.target.value);
+  };
+
+  const handleInjeongChange = () => {
+    setInjeongCheck(!injeongCheck);
   };
 
   const handleCheckChange = () => {
@@ -724,6 +738,16 @@ const Practice = () => {
 
           <OptionButton />
           <SubjectButton />
+
+          <RadioContainer>
+            <RadioTitle>노인정</RadioTitle>
+          </RadioContainer>
+
+          <Checkbox
+            type="checkbox"
+            onClick={handleInjeongChange}
+            checked={injeongCheck}
+          />
 
           <RadioContainer>
             <RadioTitle>분석</RadioTitle>
