@@ -349,7 +349,13 @@ const Main = () => {
         initialList = [wordValue, wordValue];
       }
 
-      let checklist = [isTenSec, isKnown, isInjeong];
+      let range = "";
+
+      if (isTenSec) {
+        range = await getFromLocalStorage("wordRange");
+      }
+
+      let checklist = [range, isKnown, isInjeong];
 
       setWaiting(true);
 
@@ -485,7 +491,7 @@ const Main = () => {
               onChange={handleIsTenSecChange}
               checked={isTenSec}
             />
-            <Label htmlFor="10s">10초</Label>
+            <Label htmlFor="10s">글자 수 제한</Label>
             <Checkbox
               type="checkbox"
               onChange={handleIsKnownChange}

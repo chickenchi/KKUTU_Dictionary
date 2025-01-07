@@ -260,6 +260,7 @@ const Practice = () => {
   const [randomMissionCheck, setRandomMissionCheck] = useState<boolean>(false);
   const [resetMissionCheck, setResetMissionCheck] = useState<boolean>(false);
   const [injeongCheck, setInjeongCheck] = useState<boolean>(false);
+  const [rangeCheck, setRangeCheck] = useState<boolean>(false);
   const [shMisType, setShMisType] = useState("theory");
 
   const [selectedOption, setSelectedOption] = useRecoilState(optionState);
@@ -466,7 +467,13 @@ const Practice = () => {
 
       const subject = getValueByLabel(subjectOption);
 
-      let checklist = [false, false, injeongCheck];
+      let rangeString = "";
+
+      if (rangeCheck) {
+        rangeString = await getFromLocalStorage("wordRange");
+      }
+
+      let checklist = [rangeString, false, injeongCheck];
 
       let response = await axios.post("http://127.0.0.1:5000/word", {
         word: initialList,
@@ -529,7 +536,13 @@ const Practice = () => {
 
       const subject = getValueByLabel(subjectOption);
 
-      let checklist = [false, false, injeongCheck];
+      let rangeString = "";
+
+      if (rangeCheck) {
+        rangeString = await getFromLocalStorage("wordRange");
+      }
+
+      let checklist = [rangeString, false, injeongCheck];
 
       const response = await axios.post("http://127.0.0.1:5000/word", {
         word: ["", ""],
@@ -605,7 +618,13 @@ const Practice = () => {
 
           const subject = getValueByLabel(subjectOption);
 
-          let checklist = [false, false, injeongCheck];
+          let rangeString = "";
+
+          if (rangeCheck) {
+            rangeString = await getFromLocalStorage("wordRange");
+          }
+
+          let checklist = [rangeString, false, injeongCheck];
 
           let response = await axios.post("http://127.0.0.1:5000/word", {
             word: initialList,
@@ -670,6 +689,10 @@ const Practice = () => {
 
   const handleSMTChange = (event: any) => {
     setShMisType(event.target.value);
+  };
+
+  const handleRangeChange = () => {
+    setRangeCheck(!rangeCheck);
   };
 
   const handleInjeongChange = () => {
@@ -738,6 +761,16 @@ const Practice = () => {
 
           <OptionButton />
           <SubjectButton />
+
+          <RadioContainer>
+            <RadioTitle>범위</RadioTitle>
+          </RadioContainer>
+
+          <Checkbox
+            type="checkbox"
+            onClick={handleRangeChange}
+            checked={rangeCheck}
+          />
 
           <RadioContainer>
             <RadioTitle>노인정</RadioTitle>

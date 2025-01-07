@@ -44,7 +44,7 @@ class WordDB:
         sql = ""
         rangeSet = ""
         options = ""
-        isTenSec = dto.checklist[0] if dto.checklist and len(dto.checklist) > 0 else False
+        range = dto.checklist[0] if dto.checklist and len(dto.checklist) > 0 else False
         isKnown = dto.checklist[1] if dto.checklist and len(dto.checklist) > 1 else False
         isInjeong = dto.checklist[2] if dto.checklist and len(dto.checklist) > 1 else False
         subject = dto.subject
@@ -56,8 +56,13 @@ class WordDB:
                 word >= '{start}' AND word <= '{end}'
             """
 
-        if isTenSec:
-            options += "AND CHAR_LENGTH(word) < 11\n"
+        if range:
+            min = range.split("~")[0]
+            max = range.split("~")[1]
+
+            options += f"""AND CHAR_LENGTH(word) >= {min}
+            AND CHAR_LENGTH(word) <= {max}
+            """
         if isKnown:
             options += "AND checked = true\n"
         if isInjeong:
@@ -760,7 +765,7 @@ class WordDB:
         subjects = dto['subject'] if dto['subject'] != 'all' else "X"
         words = dto['word']
 
-        sql = text(f"INSERT IGNORE INTO Word VALUES (:word, :subject, 0, '')")
+        sql = text(f"INSERT IGNORE INTO Word VALUES (:word, :subject, 0, '', true)")
 
         try:
             result = self.session.execute(

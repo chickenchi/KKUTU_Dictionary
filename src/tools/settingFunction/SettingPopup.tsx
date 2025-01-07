@@ -51,6 +51,38 @@ const AttackDiv = styled.div`
   margin-bottom: 10px;
 `;
 
+const WordRangeDiv = styled.div`
+  width: 100%;
+  height: 30px;
+
+  margin-bottom: 10px;
+`;
+
+const WordRangeLabel = styled.label`
+  width: 80%;
+
+  margin-right: 10px;
+
+  font-size: 12pt;
+`;
+
+const WordRangeButton = styled.button`
+  width: 45px;
+  height: 100%;
+
+  font-family: "KCC-Hanbit";
+`;
+
+const WordRange = styled.input`
+  width: 85px;
+  height: 100%;
+
+  margin-right: 5px;
+
+  text-align: center;
+  font-family: "KCC-Hanbit";
+`;
+
 const Attack = styled.input`
   width: 85px;
   height: 100%;
@@ -122,6 +154,7 @@ interface SettingPopupProps {
 export const SettingPopup = ({ setOpenSetting }: SettingPopupProps) => {
   const [addAttackInitial, setAddAttackInitial] = useState("");
   const [pullAttackInitial, setPullAttackInitial] = useState("");
+  const [wordRange, setWordRange] = useState("");
   const [selectedOption, setSelectedOption] = useState<string>("villain");
 
   const { setAlarm } = useAlarm();
@@ -163,6 +196,10 @@ export const SettingPopup = ({ setOpenSetting }: SettingPopupProps) => {
     setPullAttackInitial(e.target.value);
   };
 
+  const handleWordRangeChange = (e: any) => {
+    setWordRange(e.target.value);
+  };
+
   const handleKeyDown = (event: any) => {
     if (event.key === "Enter") {
       event.preventDefault();
@@ -177,8 +214,39 @@ export const SettingPopup = ({ setOpenSetting }: SettingPopupProps) => {
     }
   };
 
+  const handleKeyDownWordRange = (event: any) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      wordRangeFunction();
+    }
+  };
+
   const handleOptionChange = (e: any) => {
     setSelectedOption(e.target.value);
+  };
+
+  const wordRangeFunction = async () => {
+    if (!wordRange.includes("~")) {
+      setAlarm(
+        "error",
+        `형식이 바르지 않습니다. [1~100]과 같이 지정해 주세요.`
+      );
+      return;
+    }
+
+    const range = wordRange.split("~");
+
+    if (isNaN(parseInt(range[0])) || isNaN(parseInt(range[1]))) {
+      setAlarm("error", `숫자가 아닌 기호가 포함돼 있습니다.`);
+    }
+
+    if (parseInt(range[0]) < 1 || parseInt(range[1]) > 32767) {
+      setAlarm("error", `범위가 비정상적입니다. 최대 범위는 1~32767입니다.`);
+    }
+
+    saveToLocalStorage("wordRange", wordRange);
+
+    setAlarm("success", `성공적으로 설정되었습니다.`);
   };
 
   const pull = async () => {
@@ -240,6 +308,15 @@ export const SettingPopup = ({ setOpenSetting }: SettingPopupProps) => {
           />
           <AttackButton onClick={pull}>설정</AttackButton>
         </AttackDiv>
+        <WordRangeDiv>
+          <WordRangeLabel>제한 글자 수 범위</WordRangeLabel>
+          <WordRange
+            onChange={handleWordRangeChange}
+            onKeyDown={handleKeyDownWordRange}
+            placeholder="a~b"
+          />
+          <WordRangeButton onClick={wordRangeFunction}>설정</WordRangeButton>
+        </WordRangeDiv>
 
         <CloseButton onClick={() => setOpenSetting(false)}>나가기</CloseButton>
       </Popup>
