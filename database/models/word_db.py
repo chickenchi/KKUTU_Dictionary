@@ -44,9 +44,12 @@ class WordDB:
         sql = ""
         rangeSet = ""
         options = ""
+        
         range = dto.checklist[0] if dto.checklist and len(dto.checklist) > 0 else False
         isKnown = dto.checklist[1] if dto.checklist and len(dto.checklist) > 1 else False
-        isInjeong = dto.checklist[2] if dto.checklist and len(dto.checklist) > 1 else False
+        isInjeong = dto.checklist[2] if dto.checklist and len(dto.checklist) > 2 else False
+        isOneHitWord = dto.checklist[3] if dto.checklist and len(dto.checklist) > 3 else False
+        
         subject = dto.subject
 
         if first_letter != '' and first_letter in 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ':
@@ -70,6 +73,11 @@ class WordDB:
         if subject != "all":
             options += f"AND subject = '{subject}'"
 
+        oneHitWordInitial = self.oneHitWordInitial(first_letter, item_letter, options, isOneHitWord)
+
+        if isOneHitWord:
+            options += oneHitWordInitial
+
         if dto.type == 'attack':
             sql = self.attack(first_letter, item_letter, rangeSet, options)
         if dto.type == 'hardAttack':
@@ -81,6 +89,7 @@ class WordDB:
 
             count = self.session.execute(text(sql)).fetchall()
             count = count[0][0]
+
             
             if dto.shMisType == 'value':
                 return self.valueMission(count, first_letter, item_letter, dto.mission, rangeSet, options)
@@ -95,7 +104,49 @@ class WordDB:
             sql = self.long(first_letter, item_letter, rangeSet, options)
 
         result = self.session.execute(text(sql)).fetchall()
+        print(sql)
         return result
+    
+    def oneHitWordInitial(self, front_initial1, front_initial2, options, isOneHitWord):
+        rangeSet = f"""
+        (
+            word LIKE '{front_initial1}%' OR
+            word LIKE '{front_initial2}%'
+        )
+        """
+            
+        back_initials = self.getBackInitials(rangeSet, options)
+
+        oneHitWordInitials = "AND"
+
+        if isOneHitWord == True:
+            oneHitWordInitials += """
+(
+word LIKE '궰'"""
+        else:
+            oneHitWordInitials += """ NOT ("""
+
+        for back_initial in back_initials:
+            sql = f"""
+            SELECT EXISTS (
+                SELECT 1
+                FROM word
+                WHERE word LIKE '{back_initial[0]}%'
+                OR word LIKE CONCAT(getDoumChar('{back_initial[0]}'), '%')
+            );
+            """
+
+            result = self.session.execute(text(sql)).fetchall()
+
+            if result[0][0] == 0:
+
+                oneHitWordInitials += f"""
+OR word LIKE '%{back_initial[0]}'"""
+
+        oneHitWordInitials += """
+)"""
+
+        return oneHitWordInitials
     
     def attack(self, front_initial1, front_initial2, rangeSet, options):
         if not rangeSet:
@@ -416,6 +467,22 @@ class WordDB:
             self.session.rollback()
             print(f"Error: {e}")
 
+    def getBackInitials(self, rangeSet, options):
+        sql = f"""
+            SELECT RIGHT(word, 1)
+            FROM Word
+            WHERE {rangeSet}
+            {options}
+        """
+
+        try:
+            result = self.session.execute(text(sql)).fetchall()
+            return result
+
+        except Exception as e:
+            print(f"Error: {e}")
+            return ["문제가 발생하였습니다."]
+
     def valueMission(self, count, front_initial1, front_initial2, mission, rangeSet, options):
         chain = 1
 
@@ -426,22 +493,8 @@ class WordDB:
                 OR LEFT(word, 1) = '{front_initial2}'
             )
         """
-        
-        sql = f"""
-            SELECT RIGHT(word, 1)
-            FROM Word
-            WHERE {rangeSet}
-            {options}
-        """
 
-        result = []
-
-        try:
-            result = self.session.execute(text(sql)).fetchall()
-
-        except Exception as e:
-            print(f"Error: {e}")
-            return ["문제가 발생하였습니다."]
+        result = self.getBackInitials(rangeSet, options)
         
         rsList = {}
         

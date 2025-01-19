@@ -366,7 +366,7 @@ const Main = () => {
         range = await getFromLocalStorage("wordRange");
       }
 
-      let checklist = [range, isKnown, isInjeong];
+      let checklist = [range, isKnown, isInjeong, isOneHitWord];
 
       setWaiting(true);
 
