@@ -2,7 +2,7 @@ import React from "react";
 import styled from "styled-components";
 
 const Header = styled.div`
-  background-color: rgb(246, 246, 246);
+  background-color: none;
   width: 100%;
   height: 12%;
   display: flex;

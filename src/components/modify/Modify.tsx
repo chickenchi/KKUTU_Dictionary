@@ -6,7 +6,7 @@ import { useAlarm } from "../../tools/alarmFunction/AlarmProvider";
 import AddRemove from "./AddRemove";
 
 const Header = styled.div`
-  background-color: rgb(250, 250, 250);
+  background-color: white;
   width: 100%;
   height: 88%;
 
@@ -26,16 +26,15 @@ const ToolList = styled.div`
 
 const SearchContainer = styled.div`
   width: 100%;
-  margin-bottom: 5px;
+  margin-bottom: 15px;
 
   display: flex;
-  justify-content: center;
-  flex-direction: column;
+  align-items: center;
+  flex-direction: row;
 `;
 
 const SearchTitle = styled.p`
-  margin-right: 12px;
-  margin-bottom: 10px;
+  margin-right: 15px;
 
   font-size: 18pt;
 `;
@@ -44,15 +43,9 @@ const TypeContainer = styled.div`
   display: flex;
 `;
 
-const Subtitle = styled.p`
-  font-size: 15pt;
-`;
-
 const ModifyType = styled.select`
   height: 25px;
   width: 90px;
-  margin-left: 10px;
-  margin-bottom: 10px;
 
   font-family: "Pretendard";
 `;
@@ -81,7 +74,6 @@ const Modify = () => {
           <SearchTitle>단어 수정</SearchTitle>
 
           <TypeContainer>
-            <Subtitle>변경 유형</Subtitle>
             <ModifyType
               name="subject"
               value={editOption}
@@ -91,9 +83,8 @@ const Modify = () => {
               <option value="modify">수정</option>
             </ModifyType>
           </TypeContainer>
-
-          {editOption === "addRemove" ? <AddRemove /> : <></>}
         </SearchContainer>
+        {editOption === "addRemove" ? <AddRemove /> : <></>}
       </ToolList>
     </Header>
   );

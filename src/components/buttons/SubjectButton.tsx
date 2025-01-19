@@ -1,22 +1,22 @@
 import React, { useState } from "react";
 import { useRecoilState } from "recoil";
 import styled from "styled-components";
-import { modalState, subjectState } from "../../Atom";
+import { modalState, subjectState } from "../../RecoilAtoms/common/Atom";
 import { subjectOptions } from "../../commonFunctions/SubjectOptions";
 import { jaccardSimilarity } from "../functions/JaccardSimilarity";
 
 const SubjectDiv = styled.div`
   position: relative;
 
-  background-color: white;
+  background-color: rgba(0, 0, 0, 0);
 
   height: 25px;
   width: 130px;
 
-  margin-right: 5px;
+  margin-right: 10px;
 
-  border: 1px solid black;
-  border-radius: 3px;
+  border: 1px solid rgb(40, 40, 40);
+  border-radius: 2px;
 
   display: flex;
   justify-content: center;
@@ -27,7 +27,7 @@ const Subject = styled.input`
   position: absolute;
   left: 3px;
 
-  background-color: white;
+  background-color: rgba(0, 0, 0, 0);
 
   height: 22px;
   width: 90px;
@@ -44,14 +44,14 @@ const Subject = styled.input`
 
 const SubjectListBtn = styled.button`
   position: absolute;
-  right: 3px;
+  right: 5px;
 
   background-image: url("./image/list.png");
   background-color: rgba(0, 0, 0, 0);
   background-size: cover;
 
-  width: 20px;
-  height: 20px;
+  width: 12px;
+  height: 12px;
 
   border: none;
 `;

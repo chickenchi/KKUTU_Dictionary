@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useState } from "react";
 import { useRecoilState } from "recoil";
-import { wordValueState } from "../../Atom";
+import { wordValueState } from "../../RecoilAtoms/common/Atom";
 
 const WordContext = createContext<any>(null);
 

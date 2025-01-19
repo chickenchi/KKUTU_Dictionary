@@ -72,6 +72,8 @@ class WordDB:
 
         if dto.type == 'attack':
             sql = self.attack(first_letter, item_letter, rangeSet, options)
+        if dto.type == 'hardAttack':
+            sql = self.hardAttack(first_letter, item_letter, rangeSet, options)
         elif dto.type == 'mission':
             sql = f"""
                 SELECT first_letter_count('{first_letter}');
@@ -110,6 +112,29 @@ class WordDB:
                 WHERE EXISTS (
                     SELECT 1
                     FROM AttackInitial a
+                    WHERE w.word LIKE CONCAT('%', a.initial)
+                )
+                AND {rangeSet}
+                {options}
+                ORDER BY CHAR_LENGTH(w.word) DESC;
+            """
+        return sql
+    
+    def hardAttack(self, front_initial1, front_initial2, rangeSet, options):
+        if not rangeSet:
+            rangeSet = f"""
+            (
+                w.word LIKE '{front_initial1}%' OR
+                w.word LIKE '{front_initial2}%'
+            )
+        """
+
+        sql = f"""
+                SELECT *
+                FROM Word w
+                WHERE EXISTS (
+                    SELECT 1
+                    FROM HardAttackInitial a
                     WHERE w.word LIKE CONCAT('%', a.initial)
                 )
                 AND {rangeSet}

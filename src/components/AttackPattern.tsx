@@ -11,7 +11,7 @@ import { getDoumChar } from "./functions/GetDoumChar";
 import { useWaiting } from "../tools/waitFunction/WaitProvider";
 
 const Header = styled.div`
-  background-color: rgb(250, 250, 250);
+  background-color: white;
   width: 100%;
   height: 88%;
 
@@ -49,7 +49,7 @@ const SearchInput = styled.input`
 `;
 
 const SearchButton = styled.button`
-  background-color: rgba(230, 230, 230);
+  background-color: #719eff;
 
   width: 68px;
   height: 35px;
@@ -57,7 +57,7 @@ const SearchButton = styled.button`
   border-radius: 4px;
   border: none;
 
-  color: rgba(80, 80, 80);
+  color: white;
   font-size: 12pt;
   font-weight: 300;
   font-family: "Pretendard";
@@ -68,11 +68,11 @@ const SearchButton = styled.button`
     box-shadow 0.2s ease;
 
   &:hover {
-    background-color: rgba(210, 210, 210);
+    background-color: #507acc;
   }
 
   &:active {
-    background-color: rgba(190, 190, 190);
+    background-color: #3e6bb3;
     transform: scale(0.98);
   }
 
@@ -82,13 +82,13 @@ const SearchButton = styled.button`
 `;
 
 const ImportWord = styled.div`
-  background-color: rgb(245, 245, 245);
+  background-color: none;
 
   margin-top: 20px;
   margin-left: 20px;
 
   border-radius: 10px;
-  border: 2px solid rgb(235, 235, 235);
+  border: none;
 
   width: 95%;
   height: 70%;
@@ -129,13 +129,11 @@ const GroupHeader = styled.div`
   cursor: pointer;
   font-weight: bold;
   padding: 10px;
-  background-color: rgb(240, 240, 240);
   margin: 5px 0;
 `;
 
 const GroupBody = styled.div`
   padding-left: 20px;
-  background-color: #fafafa;
 `;
 
 const ToggleIcon = styled.span`

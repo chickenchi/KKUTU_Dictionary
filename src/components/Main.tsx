@@ -13,13 +13,13 @@ import {
   subjectOptions,
 } from "../commonFunctions/SubjectOptions";
 import { useRecoilState } from "recoil";
-import { optionState, subjectState } from "../Atom";
+import { optionState, subjectState } from "../RecoilAtoms/common/Atom";
 import SubjectModal from "../tools/subjectFunction/Subject";
 import SubjectButton from "./buttons/SubjectButton";
 import OptionButton from "./buttons/OptionButton";
 
 const Header = styled.div`
-  background-color: rgb(250, 250, 250);
+  background-color: white;
   width: 100%;
   height: 88%;
 
@@ -97,14 +97,11 @@ const SearchTitle = styled.p`
 
 const ImportWord = styled.div`
   position: relative;
-  background-color: rgb(245, 245, 245);
 
   margin-top: 20px;
   margin-left: 20px;
 
   border-radius: 10px;
-  border: 2px solid rgb(235, 235, 235);
-
   width: 95%;
   height: 70%;
 
@@ -118,6 +115,9 @@ const ImportWord = styled.div`
 const MissionType = styled.select`
   position: absolute;
 
+  border: 1px solid rgb(40, 40, 40);
+  border-radius: 2px;
+
   right: 20px;
 
   width: 110px;
@@ -125,6 +125,8 @@ const MissionType = styled.select`
 
   font-size: 9pt;
   font-family: "Pretendard";
+
+  outline: none;
 `;
 
 const ShMisType = styled.option``;
@@ -150,24 +152,28 @@ const Mission = styled.input`
 `;
 
 const SearchButton = styled.button`
+  background-color: #719eff;
+
   width: 68px;
   height: 25px;
+
+  color: white;
   font-size: 9pt;
-  color: rgba(80, 80, 80);
-  background-color: rgba(230, 230, 230);
+
+  border: none;
   border-radius: 4px;
-  border: 1px solid rgba(200, 200, 200);
+
   cursor: pointer;
   transition: background-color 0.3s ease, transform 0.2s ease,
     box-shadow 0.2s ease;
   font-family: "Pretendard";
 
   &:hover {
-    background-color: rgba(210, 210, 210);
+    background-color: rgba(230, 230, 230);
   }
 
   &:active {
-    background-color: rgba(190, 190, 190);
+    background-color: rgba(240, 240, 240);
     transform: scale(0.98);
   }
 
@@ -209,6 +215,7 @@ const Main = () => {
   const [isTenSec, setIsTenSec] = useState<boolean>(false);
   const [isKnown, setIsKnown] = useState<boolean>(false);
   const [isInjeong, setIsInjeong] = useState<boolean>(false);
+  const [isOneHitWord, setIsOneHitWord] = useState<boolean>(false);
 
   const [wordList, setWordList] = useState<string[]>([]);
 
@@ -260,6 +267,10 @@ const Main = () => {
 
   const handleIsInjeongChange = () => {
     setIsInjeong(!isInjeong);
+  };
+
+  const handleIsOnHitWordChange = () => {
+    setIsOneHitWord(!isOneHitWord);
   };
 
   useEffect(() => {
@@ -407,26 +418,6 @@ const Main = () => {
               setBackWordValue("");
             }
             break;
-          case "1":
-            e.preventDefault();
-            setSelectedOption("mission");
-            break;
-          case "2":
-            e.preventDefault();
-            setSelectedOption("attack");
-            break;
-          case "3":
-            e.preventDefault();
-            setSelectedOption("long");
-            break;
-          case "4":
-            e.preventDefault();
-            setSelectedOption("villain");
-            break;
-          case "5":
-            e.preventDefault();
-            setSelectedOption("protect");
-            break;
         }
 
         if (e.altKey) {
@@ -503,7 +494,13 @@ const Main = () => {
               onChange={handleIsInjeongChange}
               checked={isInjeong}
             />
-            <Label htmlFor="memorize">노인정</Label>
+            <Label htmlFor="injeong">노인정</Label>
+            <Checkbox
+              type="checkbox"
+              onChange={handleIsOnHitWordChange}
+              checked={isOneHitWord}
+            />
+            <Label htmlFor="oneHitWord">한방 단어</Label>
           </RadioContainer>
 
           <SettingButton onClick={handleOpenSettingChange}>

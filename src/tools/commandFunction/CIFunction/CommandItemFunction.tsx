@@ -8,7 +8,7 @@ import { setWord } from "../innerComFunction/WordSet";
 import { useWord } from "../../wordFunction/WordProvider";
 import { UreadingWord } from "../innerComFunction/Ureading";
 import { useWaiting } from "../../waitFunction/WaitProvider";
-import { wordValueState } from "../../../Atom";
+import { wordValueState } from "../../../RecoilAtoms/common/Atom";
 import { useRecoilState } from "recoil";
 
 export const countOccurrences = (str: string, subStr: string) => {

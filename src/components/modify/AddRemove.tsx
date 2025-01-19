@@ -10,29 +10,34 @@ import { subjectOptions } from "../../commonFunctions/SubjectOptions";
 import SubjectModal from "../../tools/subjectFunction/Subject";
 import SubjectButton from "../buttons/SubjectButton";
 import { useRecoilState } from "recoil";
-import { subjectState } from "../../Atom";
+import { subjectState } from "../../RecoilAtoms/common/Atom";
 
 const AddRemoveContainer = styled.div``;
 
 const Word = styled.textarea`
   width: 98%;
-  height: 100px;
+  height: 150px;
+
   margin-right: 10px;
   margin-top: 10px;
   margin-bottom: 10px;
+
   padding-left: 6px;
   padding-top: 6px;
+
+  border: none;
 
   text-align: left;
   font-size: 9pt;
   font-family: "Pretendard";
 
+  line-height: 1.7;
+
   resize: none;
+  outline: none;
 `;
 
 const ViewWord = styled.div`
-  background-color: white;
-
   width: 98%;
   height: 300px;
 
@@ -42,9 +47,11 @@ const ViewWord = styled.div`
   padding-left: 10px;
   padding-top: 10px;
 
-  color: rgb(80, 80, 80);
+  color: rgb(40, 40, 40);
   font-size: 11pt;
   font-family: "Pretendard";
+
+  line-height: 1.5;
 
   text-align: left;
 
@@ -84,17 +91,18 @@ const BtnContainer = styled.div`
   display: flex;
 `;
 
-const ModifyButton = styled.button`
-  background-color: rgb(230, 230, 230);
+const ModifyButton = styled.button<{ type: string }>`
+  background-color: ${({ type }) => (type === "add" ? "#719EFF" : "#ff7171")};
 
   border-radius: 4px;
   border: none;
+
   margin-right: 5px;
 
   width: 68px;
   height: 25px;
 
-  color: rgba(80, 80, 80);
+  color: white;
   font-size: 9pt;
   font-family: "Pretendard";
 
@@ -103,11 +111,11 @@ const ModifyButton = styled.button`
     box-shadow 0.2s ease;
 
   &:hover {
-    background-color: rgba(210, 210, 210);
+    background-color: ${({ type }) => (type === "add" ? "#507acc" : "#CC5A5A")};
   }
 
   &:active {
-    background-color: rgba(190, 190, 190);
+    background-color: ${({ type }) => (type === "add" ? "#3E6BB3" : "#A94A4A")};
     transform: scale(0.98);
   }
 
@@ -117,18 +125,18 @@ const ModifyButton = styled.button`
 `;
 
 const CommitButton = styled.button`
-  background-color: rgba(230, 230, 230);
+  background-color: rgba(0, 0, 0, 0);
 
   margin-bottom: 15px;
   margin-right: 5px;
 
   border-radius: 4px;
-  border: none;
+  border: 1px solid rgb(80, 80, 80);
 
   width: 68px;
   height: 25px;
 
-  color: rgba(80, 80, 80);
+  color: rgb(80, 80, 80);
   font-size: 9pt;
   font-family: "Pretendard";
 
@@ -335,8 +343,12 @@ const AddRemove = () => {
       </ViewWord>
 
       <BtnContainer>
-        <ModifyButton onClick={adding}>추가</ModifyButton>
-        <ModifyButton onClick={removing}>삭제</ModifyButton>
+        <ModifyButton type="add" onClick={adding}>
+          추가
+        </ModifyButton>
+        <ModifyButton type="remove" onClick={removing}>
+          삭제
+        </ModifyButton>
       </BtnContainer>
     </AddRemoveContainer>
   );

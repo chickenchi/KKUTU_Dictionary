@@ -6,7 +6,7 @@ export const modalState = atom({
   default: false,
 });
 
-export const optionState = atom({
+export const optionState = atom<string>({
   key: "optionState",
   default: "villain",
 });
@@ -19,4 +19,9 @@ export const subjectState = atom({
 export const wordValueState = atom<string>({
   key: "wordValueState",
   default: "",
+});
+
+export const practiceOptionOpenSetting = atom<boolean>({
+  key: "practiceOptionOpenSetting",
+  default: false,
 });

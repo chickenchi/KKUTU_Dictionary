@@ -9,21 +9,62 @@ import { useAlarm } from "../tools/alarmFunction/AlarmProvider";
 import { characters, hangulChars } from "../commonFunctions/wordNhangul";
 import { getFromLocalStorage } from "../commonFunctions/LocalStorage";
 import { useWaiting } from "../tools/waitFunction/WaitProvider";
-import SubjectButton from "./buttons/SubjectButton";
-import OptionButton from "./buttons/OptionButton";
 import { useRecoilState } from "recoil";
-import { optionState, subjectState } from "../Atom";
+import {
+  optionState,
+  practiceOptionOpenSetting,
+  subjectState,
+} from "../RecoilAtoms/common/Atom";
 import { getValueByLabel } from "../commonFunctions/SubjectOptions";
 import SubjectModal from "../tools/subjectFunction/Subject";
+import {
+  answerCheckState,
+  changeMissionCheckState,
+  currentTierState,
+  injeongCheckState,
+  missionValueState,
+  onTierCheckState,
+  randomMissionCheckState,
+  rangeCheckState,
+  resetMissionCheckState,
+  shMisTypeState,
+} from "../RecoilAtoms/practice/PracticeAtom";
+import { PracticeOptionSettingPopup } from "../tools/practiceOptionFunction/PracticeOptionSettingPopup";
 
 const Header = styled.div`
-  position: relative;
+  position: "relative";
   background-image: url("./image/gamebg.png");
 
   width: 100%;
-  height: 81%;
+  height: 88%;
 
   font-family: "Pretendard";
+
+  display: "flex";
+  align-items: center;
+  justify-content: center;
+`;
+
+const SettingView = styled.div`
+  width: 100%;
+
+  display: flex;
+  justify-content: flex-end;
+`;
+
+const SettingButton = styled.button`
+  background-color: rgba(100, 100, 100, 0);
+
+  border: none;
+
+  padding: 30px;
+`;
+
+const Setting = styled.img`
+  width: 30px;
+  height: 30px;
+
+  margin-right: 10px;
 `;
 
 const TestContainer = styled.div`
@@ -166,84 +207,13 @@ const Shuffle = styled.button`
   }
 `;
 
-const RadioList = styled.div`
-  background-color: white;
-  width: 100%;
-  height: 40px;
-
-  display: flex;
-  justify-content: center;
-  align-items: center;
-`;
-
-const ShowRadioButton = styled.button<{ folded: boolean }>`
-  background-color: rgba(255, 255, 255, 0.3);
-
-  width: 100%;
-  height: 30px;
-
-  border: none;
-
-  transform: ${({ folded }) => (!folded ? "rotate(0deg)" : "rotate(180deg)")};
-
-  margin-right: 10px;
-`;
-
-const SRBImage = styled.img`
-  width: 30px;
-  height: 30px;
-`;
-
-const RadioContainer = styled.div`
-  height: 30px;
-  display: flex;
-  align-items: center;
-`;
-
-const RadioTitle = styled.label`
-  margin-left: 12px;
-  margin-right: 8px;
-
-  font-size: 10pt;
-`;
-
-const Checkbox = styled.input`
-  width: auto;
-  height: auto;
-
-  font-family: "Pretendard";
-`;
-
-const TierNumber = styled.input`
-  width: 30px;
-  height: 18px;
-
-  margin-left: 10px;
-
-  font-size: 9pt;
-  text-align: center;
-`;
-
-const MissionType = styled.select`
-  width: 50px;
-  height: 18px;
-
-  margin-left: 5px;
-
-  font-size: 9pt;
-  font-family: "Pretendard";
-`;
-
-const ShMisType = styled.option``;
-
 const Console = styled.p`
   background-color: rgba(0, 0, 0, 0.1);
   position: absolute;
   width: 100%;
   bottom: 0;
 
-  min-height: 10%;
-  max-height: 40%;
+  max-height: 30%;
 
   padding-top: 15px;
   padding-left: 10px;
@@ -253,27 +223,25 @@ const Console = styled.p`
 `;
 
 const Practice = () => {
-  const [answerCheck, setAnswerCheck] = useState<boolean>(true);
-  const [onTierCheck, setOnTierCheck] = useState<boolean>(true);
-  const [currentTier, setCurrentTier] = useState<number>(1);
-  const [changeMissionCheck, setChangeMissionCheck] = useState<boolean>(true);
-  const [randomMissionCheck, setRandomMissionCheck] = useState<boolean>(false);
-  const [resetMissionCheck, setResetMissionCheck] = useState<boolean>(false);
-  const [injeongCheck, setInjeongCheck] = useState<boolean>(false);
-  const [rangeCheck, setRangeCheck] = useState<boolean>(false);
-  const [shMisType, setShMisType] = useState("theory");
+  const [answerCheck] = useRecoilState(answerCheckState);
+  const [onTierCheck] = useRecoilState(onTierCheckState);
+  const [currentTier] = useRecoilState(currentTierState);
+  const [changeMissionCheck] = useRecoilState(changeMissionCheckState);
+  const [randomMissionCheck] = useRecoilState(randomMissionCheckState);
+  const [resetMissionCheck] = useRecoilState(resetMissionCheckState);
+  const [injeongCheck] = useRecoilState(injeongCheckState);
+  const [rangeCheck] = useRecoilState(rangeCheckState);
+  const [shMisType] = useRecoilState(shMisTypeState);
+  const [missionValue, setMissionValue] = useRecoilState(missionValueState);
 
   const [selectedOption, setSelectedOption] = useRecoilState(optionState);
   const [subjectOption, setSubjectOption] = useRecoilState(subjectState);
   const [answer, setAnswer] = useState("");
-  const [missionValue, setMissionValue] = useState("가");
   const [initial, setInitial] = useState("가");
 
   const [currentNumber, setCurrentNumber] = useState(0);
   const [maxCurrentNumber, setMaxCurrentNumber] = useState(0);
   const [villainWord, setVillainWord] = useState("");
-
-  const [folded, setFolded] = useState(false);
 
   const [log, setLog] = useState("");
 
@@ -583,8 +551,6 @@ const Practice = () => {
           return;
         }
 
-        alert(reviewWordResult);
-
         word = reviewWordResult[3][0];
         tier = reviewWordResult[3][2];
 
@@ -687,44 +653,6 @@ const Practice = () => {
     if (randomMissionCheck) changeMission();
   }, [randomMissionCheck]);
 
-  const handleSMTChange = (event: any) => {
-    setShMisType(event.target.value);
-  };
-
-  const handleRangeChange = () => {
-    setRangeCheck(!rangeCheck);
-  };
-
-  const handleInjeongChange = () => {
-    setInjeongCheck(!injeongCheck);
-  };
-
-  const handleCheckChange = () => {
-    setAnswerCheck(!answerCheck);
-  };
-
-  const handleOneTierChange = () => {
-    setOnTierCheck(!onTierCheck);
-  };
-
-  const handleCurrentTierChange = (e: any) => {
-    setCurrentTier(e.target.value);
-  };
-
-  const handleChangeMissionChange = () => {
-    setChangeMissionCheck(!changeMissionCheck);
-    setRandomMissionCheck(false);
-  };
-
-  const handleRandomMissionChange = () => {
-    setRandomMissionCheck(!randomMissionCheck);
-    if (randomMissionCheck) setMissionValue("가");
-  };
-
-  const handleResetMissionChange = () => {
-    setResetMissionCheck(!resetMissionCheck);
-  };
-
   const handleAnswerChange = (event: any) => {
     setAnswer(event.target.value);
   };
@@ -737,10 +665,6 @@ const Practice = () => {
     setMissionValue(event.target.value);
   };
 
-  const handleFoldingChange = () => {
-    setFolded(!folded);
-  };
-
   const wordRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
@@ -749,123 +673,25 @@ const Practice = () => {
     }, 0);
   }, []);
 
+  const [openSetting, setOpenSetting] = useRecoilState(
+    practiceOptionOpenSetting
+  );
+
+  const handleOpenSettingChange = (event: any) => {
+    setOpenSetting(!openSetting);
+  };
+
   return (
     <Header className="Header">
       <SubjectModal setSubjectChange={setSubjectOption} />
 
-      {!folded && (
-        <RadioList>
-          <RadioContainer>
-            <RadioTitle>검색 유형</RadioTitle>
-          </RadioContainer>
+      <SettingView>
+        <SettingButton onClick={handleOpenSettingChange}>
+          <Setting src="./image/setting.png" />
+        </SettingButton>
+      </SettingView>
 
-          <OptionButton />
-          <SubjectButton />
-
-          <RadioContainer>
-            <RadioTitle>범위</RadioTitle>
-          </RadioContainer>
-
-          <Checkbox
-            type="checkbox"
-            onClick={handleRangeChange}
-            checked={rangeCheck}
-          />
-
-          <RadioContainer>
-            <RadioTitle>노인정</RadioTitle>
-          </RadioContainer>
-
-          <Checkbox
-            type="checkbox"
-            onClick={handleInjeongChange}
-            checked={injeongCheck}
-          />
-
-          <RadioContainer>
-            <RadioTitle>분석</RadioTitle>
-          </RadioContainer>
-
-          <Checkbox
-            type="checkbox"
-            onClick={handleCheckChange}
-            checked={answerCheck}
-          />
-
-          <RadioContainer>
-            <RadioTitle>티어</RadioTitle>
-          </RadioContainer>
-
-          <Checkbox
-            type="checkbox"
-            onClick={handleOneTierChange}
-            checked={onTierCheck}
-          />
-
-          {onTierCheck && (
-            <>
-              <TierNumber
-                value={currentTier}
-                onChange={handleCurrentTierChange}
-                placeholder="티어"
-              />
-
-              <MissionType
-                id="shMisType"
-                name="shMisType"
-                value={shMisType}
-                onChange={handleSMTChange}
-              >
-                <ShMisType value="value">이론</ShMisType>
-                <ShMisType value="score">점수</ShMisType>
-                <ShMisType value="theory">개수</ShMisType>
-              </MissionType>
-            </>
-          )}
-
-          <RadioContainer>
-            <RadioTitle>변경</RadioTitle>
-          </RadioContainer>
-
-          <Checkbox
-            type="checkbox"
-            onClick={handleChangeMissionChange}
-            checked={changeMissionCheck}
-          />
-
-          {changeMissionCheck && !resetMissionCheck && (
-            <>
-              <RadioContainer>
-                <RadioTitle>랜덤</RadioTitle>
-              </RadioContainer>
-
-              <Checkbox
-                type="checkbox"
-                onClick={handleRandomMissionChange}
-                checked={randomMissionCheck}
-              />
-            </>
-          )}
-
-          {changeMissionCheck && !randomMissionCheck && (
-            <>
-              <RadioContainer>
-                <RadioTitle>하드</RadioTitle>
-              </RadioContainer>
-
-              <Checkbox
-                type="checkbox"
-                onClick={handleResetMissionChange}
-                checked={resetMissionCheck}
-              />
-            </>
-          )}
-        </RadioList>
-      )}
-
-      <ShowRadioButton onClick={handleFoldingChange} folded={folded}>
-        <SRBImage src="./image/TopArrow.png" />
-      </ShowRadioButton>
+      <PracticeOptionSettingPopup />
 
       {showAlarm && (
         <Alarm

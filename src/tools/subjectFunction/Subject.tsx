@@ -5,7 +5,7 @@ import { jaccardSimilarity } from "../../components/functions/JaccardSimilarity"
 import { subjectOptions } from "../../commonFunctions/SubjectOptions";
 
 import { useRecoilState } from "recoil";
-import { modalState } from "../../Atom";
+import { modalState } from "../../RecoilAtoms/common/Atom";
 import {
   getFromLocalStorage,
   saveToLocalStorage,
@@ -85,18 +85,6 @@ const SearchInput = styled.input`
 
   color: rgb(80, 80, 80);
   font-size: 11pt;
-`;
-
-const SearchButton = styled.button`
-  background-color: rgb(215, 215, 215);
-
-  margin-right: 10px;
-
-  width: 15%;
-  height: 100%;
-
-  border: none;
-  border-radius: 5px;
 `;
 
 const RecentSearchesButton = styled.img`

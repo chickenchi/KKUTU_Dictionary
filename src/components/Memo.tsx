@@ -7,10 +7,9 @@ import { useAlarm } from "../tools/alarmFunction/AlarmProvider";
 import { useWord } from "../tools/wordFunction/WordProvider";
 import { useWaiting } from "../tools/waitFunction/WaitProvider";
 import { useRecoilState } from "recoil";
-import { wordValueState } from "../Atom";
+import { wordValueState } from "../RecoilAtoms/common/Atom";
 
 const Section = styled.div`
-  background-color: rgb(250, 250, 250);
   width: 100%;
   height: 88%;
   padding-top: 20px;
@@ -60,16 +59,16 @@ const SearchTitle = styled.p`
 `;
 
 const SearchButton = styled.button`
-  background-color: rgba(230, 230, 230);
+  background-color: rgba(0, 0, 0, 0);
 
-  width: 68px;
+  width: 55px;
   height: 25px;
 
   border-radius: 4px;
-  border: none;
+  border: 1px solid #719eff;
 
   font-size: 9pt;
-  color: rgba(80, 80, 80);
+  color: #719eff;
   font-family: "Pretendard";
 
   cursor: pointer;
@@ -78,11 +77,11 @@ const SearchButton = styled.button`
     box-shadow 0.2s ease;
 
   &:hover {
-    background-color: rgba(210, 210, 210);
+    background-color: rgba(250, 250, 250);
   }
 
   &:active {
-    background-color: rgba(190, 190, 190);
+    background-color: rgba(240, 240, 240);
     transform: scale(0.98);
   }
 
