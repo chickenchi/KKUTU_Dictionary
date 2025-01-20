@@ -72,10 +72,8 @@ class WordDB:
             options += "AND injeong = false\n"
         if subject != "all":
             options += f"AND subject = '{subject}'"
-
-        oneHitWordInitial = self.oneHitWordInitial(first_letter, item_letter, options, isOneHitWord)
-
         if isOneHitWord:
+            oneHitWordInitial = self.oneHitWordInitial(first_letter, item_letter, options, isOneHitWord)
             options += oneHitWordInitial
 
         if dto.type == 'attack':
@@ -90,7 +88,6 @@ class WordDB:
             count = self.session.execute(text(sql)).fetchall()
             count = count[0][0]
 
-            
             if dto.shMisType == 'value':
                 return self.valueMission(count, first_letter, item_letter, dto.mission, rangeSet, options)
             sql = self.mission(count, first_letter, item_letter, dto.mission, rangeSet, dto.shMisType, options)
