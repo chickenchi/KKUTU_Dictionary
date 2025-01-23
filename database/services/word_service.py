@@ -78,3 +78,7 @@ class WordService:
     def initial(self):
         selectedOption = [s[0] for s in self.word_db.initial()]
         return selectedOption
+    
+    def find_word_by_piece(self, pieces):
+        words = [s for s in self.word_db.find_word_by_piece(pieces)]
+        return words

@@ -1,5 +1,6 @@
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import sessionmaker
+from collections import Counter
 
 class WordDB:
     def setting(self):
@@ -82,7 +83,7 @@ class WordDB:
             sql = self.hardAttack(first_letter, item_letter, rangeSet, options)
         elif dto.type == 'mission':
             sql = f"""
-                SELECT first_letter_count('{first_letter}');
+                SELECT first_letter_count('{first_letter[0]}');
             """
 
             count = self.session.execute(text(sql)).fetchall()
@@ -135,8 +136,9 @@ word LIKE '궰'"""
 
             result = self.session.execute(text(sql)).fetchall()
 
-            if result[0][0] == 0:
+            print(result)
 
+            if result[0][0] == 0:
                 oneHitWordInitials += f"""
 OR word LIKE '%{back_initial[0]}'"""
 
@@ -313,8 +315,8 @@ OR word LIKE '%{back_initial[0]}'"""
             if not rangeSet:
                 rangeSet = f"""
                 (
-                    LEFT(word, 1) = '{front_initial1}'
-                    OR LEFT(word, 1) = '{front_initial2}'
+                    LEFT(word, {len(front_initial1)}) = '{front_initial1}'
+                    OR LEFT(word, {len(front_initial1)}) = '{front_initial2}'
                 )
             """
 
@@ -486,8 +488,8 @@ OR word LIKE '%{back_initial[0]}'"""
         if not rangeSet:
             rangeSet = f"""
             (
-                LEFT(word, 1) = '{front_initial1}'
-                OR LEFT(word, 1) = '{front_initial2}'
+                LEFT(word, {len(front_initial1)}) = '{front_initial1}'
+                OR LEFT(word, {len(front_initial1)}) = '{front_initial2}'
             )
         """
 
@@ -546,8 +548,8 @@ OR word LIKE '%{back_initial[0]}'"""
         if not rangeSet:
             rangeSet = f"""
             (
-                LEFT(word, 1) = '{front_initial1}'
-                OR LEFT(word, 1) = '{front_initial2}'
+                LEFT(word, {len(front_initial1)}) = '{front_initial1}'
+                OR LEFT(word, {len(front_initial1)}) = '{front_initial2}'
             )
         """
 
@@ -670,7 +672,7 @@ OR word LIKE '%{back_initial[0]}'"""
                 WHERE {rangeSet}
                 {options}
                 AND CHAR_LENGTH(word) <> 1
-                ORDER BY LEFT(word, 1) ASC, CHAR_LENGTH(word) DESC
+                ORDER BY LEFT(word, {len(front_initial1)}) ASC, CHAR_LENGTH(word) DESC
                 LIMIT 10000
             """
         
@@ -680,8 +682,8 @@ OR word LIKE '%{back_initial[0]}'"""
         if not rangeSet:
             rangeSet = f"""
                 (
-                    word LIKE '{front_initial1}%' OR
-                    word LIKE '{front_initial2}%'
+                    word LIKE '%{front_initial1}%' OR
+                    word LIKE '%{front_initial2}%'
                 )
             """
 
@@ -1025,3 +1027,39 @@ OR word LIKE '%{back_initial[0]}'"""
             self.session.rollback()
             print(f"Error: {e}")
             return ["error", "문제가 발생하였습니다."]
+        
+    def find_word_by_piece(self, pieces):
+        sql = f"""
+            SELECT word
+            FROM word
+            WHERE CHAR_LENGTH(word) <= 6"""
+        
+        try:
+            result = self.session.execute(text(sql)).fetchall()
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error: {e}")
+            return ["error", "문제가 발생하였습니다."]
+        
+        passedWords = []
+        pieceDict = {}
+
+        for piece in pieces:
+            pieceDict[piece[0]] = piece[1]
+        
+        for word in result:
+            word = word[0]
+
+            charCount = Counter(word)
+
+            check = True
+
+            for char, count in charCount.items():
+                if char not in pieceDict or pieceDict[char] < count:
+                    check = False
+                    break
+
+            if check == True:
+                passedWords.append(word)
+
+        return passedWords

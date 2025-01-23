@@ -81,3 +81,8 @@ def all_word():
 @word_blueprint.route('/initial', methods=["POST"])
 def initial():
     return jsonify(word_service.initial())
+
+@word_blueprint.route('/find_word_by_piece', methods=["POST"])
+def find_word_by_piece():
+    pieces = request.json['pieces']
+    return jsonify(word_service.find_word_by_piece(pieces))

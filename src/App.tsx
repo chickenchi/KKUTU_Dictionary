@@ -15,6 +15,7 @@ import AttackPattern from "./components/AttackPattern";
 import Waiting from "./tools/waitFunction/Waiting";
 import { RecoilRoot } from "recoil";
 import Test from "./components/Test";
+import WordPiece from "./components/WordPiece";
 
 const App = () => {
   return (
@@ -35,6 +36,7 @@ const App = () => {
             <Route path="/check_mission" element={<CheckMission />} />
             <Route path="/pattern" element={<AttackPattern />} />
             <Route path="/test" element={<Test />} />
+            <Route path="/word_piece" element={<WordPiece />} />
           </Routes>
         </AllProviders>
       </BrowserRouter>
