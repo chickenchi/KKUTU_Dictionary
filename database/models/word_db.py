@@ -1029,37 +1029,77 @@ OR word LIKE '%{back_initial[0]}'"""
             return ["error", "문제가 발생하였습니다."]
         
     def find_word_by_piece(self, pieces):
-        sql = f"""
+        if len(pieces) <= 300:
+            pieceList = ""
+
+            sql = f"""
+                SELECT word
+                FROM word
+            """ 
+
+            pieceSetting = ""
+
+            for piece in pieces:
+                pieceItem = piece[0]
+                pieceCount = piece[1]
+
+                pieceList += pieceItem
+
+                pieceSetting += f"""
+                    AND CHAR_LENGTH(word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')) BETWEEN 0 AND {pieceCount}
+                """
+
+            sql += f"""
+                WHERE word REGEXP '^[{pieceList}]*$'
+            """
+
+            sql += pieceSetting
+
+            sql += f"""
+                AND char_length(word) <= 6
+                ORDER BY char_length(word) DESC
+            """
+
+            try:
+                result = self.session.execute(text(sql)).fetchall()
+                return result
+            except Exception as e:
+                self.session.rollback()
+                print(f"Error: {e}")
+                return ["error", "문제가 발생하였습니다."]
+                
+        else:
+            sql = f"""
             SELECT word
             FROM word
             WHERE CHAR_LENGTH(word) <= 6"""
         
-        try:
-            result = self.session.execute(text(sql)).fetchall()
-        except Exception as e:
-            self.session.rollback()
-            print(f"Error: {e}")
-            return ["error", "문제가 발생하였습니다."]
-        
-        passedWords = []
-        pieceDict = {}
+            try:
+                result = self.session.execute(text(sql)).fetchall()
+            except Exception as e:
+                self.session.rollback()
+                print(f"Error: {e}")
+                return ["error", "문제가 발생하였습니다."]
+            
+            passedWords = []
+            pieceDict = {}
 
-        for piece in pieces:
-            pieceDict[piece[0]] = piece[1]
-        
-        for word in result:
-            word = word[0]
+            for piece in pieces:
+                pieceDict[piece[0]] = piece[1]
+            
+            for word in result:
+                word = word[0]
 
-            charCount = Counter(word)
+                charCount = Counter(word)
 
-            check = True
+                check = True
 
-            for char, count in charCount.items():
-                if char not in pieceDict or pieceDict[char] < count:
-                    check = False
-                    break
+                for char, count in charCount.items():
+                    if char not in pieceDict or pieceDict[char] < count:
+                        check = False
+                        break
 
-            if check == True:
-                passedWords.append(word)
+                if check == True:
+                    passedWords.append(word)
 
-        return passedWords
+            return passedWords

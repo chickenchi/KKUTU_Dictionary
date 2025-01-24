@@ -80,5 +80,8 @@ class WordService:
         return selectedOption
     
     def find_word_by_piece(self, pieces):
-        words = [s for s in self.word_db.find_word_by_piece(pieces)]
+        if len(pieces) <= 300:
+            words = [s[0] for s in self.word_db.find_word_by_piece(pieces)]
+        else:
+            words = [s for s in self.word_db.find_word_by_piece(pieces)]
         return words

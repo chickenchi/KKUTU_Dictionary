@@ -566,7 +566,7 @@ const WordResultComponent = () => {
         let wordLength = result[i].length;
         let word = result[i];
 
-        if (newWordList[wordLength].length <= 10)
+        if (result.length >= 300 && newWordList[wordLength].length <= 10)
           newWordList[wordLength].push(word);
       }
 
