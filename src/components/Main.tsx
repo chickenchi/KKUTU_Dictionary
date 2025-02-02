@@ -216,6 +216,8 @@ const Main = () => {
   const [isKnown, setIsKnown] = useState<boolean>(false);
   const [isInjeong, setIsInjeong] = useState<boolean>(false);
   const [isOneHitWord, setIsOneHitWord] = useState<boolean>(false);
+  const [isRioWord, setIsRioWord] = useState<boolean>(false);
+  const [isKkukoWord, setIsKkukoWord] = useState<boolean>(true);
 
   const [wordList, setWordList] = useState<string[]>([]);
 
@@ -271,6 +273,14 @@ const Main = () => {
 
   const handleIsOnHitWordChange = () => {
     setIsOneHitWord(!isOneHitWord);
+  };
+
+  const handleIsRioWordChange = () => {
+    setIsRioWord(!isRioWord);
+  };
+
+  const handleIsKkukoWordChange = () => {
+    setIsKkukoWord(!isKkukoWord);
   };
 
   useEffect(() => {
@@ -366,7 +376,14 @@ const Main = () => {
         range = await getFromLocalStorage("wordRange");
       }
 
-      let checklist = [range, isKnown, isInjeong, isOneHitWord];
+      let checklist = [
+        range,
+        isKnown,
+        isInjeong,
+        isOneHitWord,
+        isRioWord,
+        isKkukoWord,
+      ];
 
       setWaiting(true);
 
@@ -501,6 +518,18 @@ const Main = () => {
               checked={isOneHitWord}
             />
             <Label htmlFor="oneHitWord">한방 단어</Label>
+            <Checkbox
+              type="checkbox"
+              onChange={handleIsRioWordChange}
+              checked={isRioWord}
+            />
+            <Label htmlFor="rioWord">끄투리오</Label>
+            <Checkbox
+              type="checkbox"
+              onChange={handleIsKkukoWordChange}
+              checked={isKkukoWord}
+            />
+            <Label htmlFor="kkukoWord">끄투코리아</Label>
           </RadioContainer>
 
           <SettingButton onClick={handleOpenSettingChange}>

@@ -37,7 +37,9 @@ def initial_max_score():
 def insert_word():
     word = request.json['word']
     subject = request.json['subject']
-    dto = {'word': word, 'subject': subject}
+    rio = request.json['rio']
+    kkuko = request.json['kkuko']
+    dto = {'word': word, 'subject': subject, 'rio': rio, 'kkuko': kkuko}
     return word_service.insert_word(dto)
 
 @word_blueprint.route('/delete', methods=["POST"])

@@ -50,6 +50,8 @@ class WordDB:
         isKnown = dto.checklist[1] if dto.checklist and len(dto.checklist) > 1 else False
         isInjeong = dto.checklist[2] if dto.checklist and len(dto.checklist) > 2 else False
         isOneHitWord = dto.checklist[3] if dto.checklist and len(dto.checklist) > 3 else False
+        isRio = dto.checklist[4] if dto.checklist and len(dto.checklist) > 4 else False
+        isKKUKO = dto.checklist[5] if dto.checklist and len(dto.checklist) > 5 else False
         
         subject = dto.subject
 
@@ -71,6 +73,16 @@ class WordDB:
             options += "AND checked = true\n"
         if isInjeong:
             options += "AND injeong = false\n"
+
+        if isRio and isKKUKO:
+            options += "AND (kkuko = true AND rio = true)\n"
+        elif isRio:
+            options += "AND (rio = true OR (kkuko = true AND rio = true))\n"
+        elif isKKUKO:
+            options += "AND (kkuko = true OR (kkuko = true AND rio = true))\n"
+        else:
+            options += "AND (kkuko = false AND rio = false)\n"
+
         if subject != "all":
             options += f"AND subject = '{subject}'"
         if isOneHitWord:
@@ -82,12 +94,15 @@ class WordDB:
         if dto.type == 'hardAttack':
             sql = self.hardAttack(first_letter, item_letter, rangeSet, options)
         elif dto.type == 'mission':
-            sql = f"""
-                SELECT first_letter_count('{first_letter[0]}');
-            """
+            if first_letter != "" and first_letter[0] not in 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ':
+                sql = f"""
+                    SELECT first_letter_count('{first_letter[0]}');
+                """
 
-            count = self.session.execute(text(sql)).fetchall()
-            count = count[0][0]
+                count = self.session.execute(text(sql)).fetchall()
+                count = count[0][0]
+            else:
+                count = 1000
 
             if dto.shMisType == 'value':
                 return self.valueMission(count, first_letter, item_letter, dto.mission, rangeSet, options)
@@ -102,7 +117,6 @@ class WordDB:
             sql = self.long(first_letter, item_letter, rangeSet, options)
 
         result = self.session.execute(text(sql)).fetchall()
-        print(sql)
         return result
     
     def oneHitWordInitial(self, front_initial1, front_initial2, options, isOneHitWord):
@@ -135,8 +149,6 @@ word LIKE '궰'"""
             """
 
             result = self.session.execute(text(sql)).fetchall()
-
-            print(result)
 
             if result[0][0] == 0:
                 oneHitWordInitials += f"""
@@ -235,6 +247,7 @@ OR word LIKE '%{back_initial[0]}'"""
                 {options}
                 LIMIT 1000;
             """
+
         elif shMisType == 'score':
             if not rangeSet:
                 rangeSet = f"""
@@ -841,8 +854,10 @@ OR word LIKE '%{back_initial[0]}'"""
     def insert_word(self, dto):
         subjects = dto['subject'] if dto['subject'] != 'all' else "X"
         words = dto['word']
+        rio = dto['rio']
+        kkuko = dto['kkuko']
 
-        sql = text(f"INSERT IGNORE INTO Word VALUES (:word, :subject, 0, '', true)")
+        sql = text(f"INSERT IGNORE INTO Word VALUES (:word, :subject, 0, '', 1, {rio}, {kkuko})")
 
         try:
             result = self.session.execute(

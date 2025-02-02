@@ -14,6 +14,20 @@ import { subjectState } from "../../RecoilAtoms/common/Atom";
 
 const AddRemoveContainer = styled.div``;
 
+const TypeContainer = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+`;
+
+const ServerText = styled.option`
+  margin-right: 5px;
+`;
+
+const ServerCheck = styled.input`
+  margin-right: 5px;
+`;
+
 const Word = styled.textarea`
   width: 98%;
   height: 150px;
@@ -161,6 +175,8 @@ const CommitButton = styled.button`
 const AddRemove = () => {
   const [subjectOption, setSubjectOption] = useRecoilState(subjectState);
   const [wordContainer, setWordContainer] = useState<string>("");
+  const [isRioWord, setIsRioWord] = useState<boolean>(false);
+  const [isKkukoWord, setIsKkukoWord] = useState<boolean>(true);
 
   const handleWordChange = (event: any) => {
     setWordValue(event.target.value);
@@ -168,6 +184,14 @@ const AddRemove = () => {
 
   const setSubjectChange = (subject: string) => {
     setSubjectOption(subject);
+  };
+
+  const handleIsRioWordChange = () => {
+    setIsRioWord(!isRioWord);
+  };
+
+  const handleIsKkukoWordChange = () => {
+    setIsKkukoWord(!isKkukoWord);
   };
 
   const handleWordDown = (e: any) => {
@@ -217,6 +241,8 @@ const AddRemove = () => {
       const response = await axios.post("http://127.0.0.1:5000/insert", {
         word: wordItem[0],
         subject: wordItem[1],
+        rio: isRioWord,
+        kkuko: isKkukoWord,
       });
 
       setWaiting(false);
@@ -307,7 +333,21 @@ const AddRemove = () => {
     <AddRemoveContainer>
       <SubjectModal setSubjectChange={setSubjectChange} />
 
-      <SubjectButton />
+      <TypeContainer>
+        <SubjectButton />
+        <ServerText>끄투리오</ServerText>
+        <ServerCheck
+          type="checkbox"
+          onChange={handleIsRioWordChange}
+          checked={isRioWord}
+        />
+        <ServerText>끄투코리아</ServerText>
+        <ServerCheck
+          type="checkbox"
+          onChange={handleIsKkukoWordChange}
+          checked={isKkukoWord}
+        />
+      </TypeContainer>
 
       <Word
         value={wordValue}
