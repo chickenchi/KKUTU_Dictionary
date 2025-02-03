@@ -10,7 +10,6 @@ import {
   wordPieceSettingState,
   wordPiecesState,
 } from "../RecoilAtoms/wordPiece/WordPieceAtom";
-import { setWord } from "../tools/commandFunction/innerComFunction/WordSet";
 
 const Header = styled.div`
   background-color: white;
@@ -580,6 +579,7 @@ const WordResultComponent = () => {
   }, [setSetting]);
 
   const removePiece = (word: string) => {
+    alert(word);
     const newPieces = new Set(pieces);
 
     navigator.clipboard.writeText(word);
@@ -624,7 +624,7 @@ const WordResultComponent = () => {
                 <WordTitle>{key}글자</WordTitle>
                 <Words>
                   {words.map((word, index) => (
-                    <Word onClick={() => removePiece(words[0])} key={index}>
+                    <Word onClick={() => removePiece(words[index])} key={index}>
                       {word}
                     </Word>
                   ))}
