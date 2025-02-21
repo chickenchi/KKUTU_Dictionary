@@ -102,6 +102,8 @@ export const subjectOptions = [
     label: "한국사 사건 사고",
   },
   { value: "heroesOfTheStorm", label: "히어로즈 오브 더 스톰" },
+
+  { value: "HonkaiStarRail", label: "붕괴 스타레일" },
 ];
 
 export const getValueByLabel = (label: string) => {

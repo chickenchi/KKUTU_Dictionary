@@ -4,7 +4,7 @@ from collections import Counter
 
 class WordDB:
     def setting(self):
-        engine = create_engine('mysql+pymysql://root:1234@localhost/KKUTU')
+        engine = create_engine('mysql+pymysql://root:1234@localhost/KKUTU', echo=True)
         Session = sessionmaker(bind=engine)
         self.session = Session()
         print("connect ok")
@@ -35,6 +35,7 @@ class WordDB:
     def find_word(self, dto):
         first_letter = dto.word[0]
         item_letter = dto.word[1]
+        subject = dto.subject
 
         if first_letter == None:
             first_letter = ""
@@ -52,27 +53,30 @@ class WordDB:
         isOneHitWord = dto.checklist[3] if dto.checklist and len(dto.checklist) > 3 else False
         isRio = dto.checklist[4] if dto.checklist and len(dto.checklist) > 4 else False
         isKKUKO = dto.checklist[5] if dto.checklist and len(dto.checklist) > 5 else False
-        
-        subject = dto.subject
 
         if first_letter != '' and first_letter in 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ':
             start, end = self.get_hangul_range(first_letter)
 
             rangeSet = f"""
-                word >= '{start}' AND word <= '{end}'
+                Word.word >= '{start}' AND Word.word <= '{end}'
             """
 
         if range:
             min = range.split("~")[0]
             max = range.split("~")[1]
 
-            options += f"""AND CHAR_LENGTH(word) >= {min}
-            AND CHAR_LENGTH(word) <= {max}
+            options += f"""AND CHAR_LENGTH(Word.word) >= {min}
+            AND CHAR_LENGTH(Word.word) <= {max}
             """
         if isKnown:
             options += "AND checked = true\n"
         if isInjeong:
             options += "AND injeong = false\n"
+        if subject != 'all':
+            options += f"AND subject = '{subject}'\n"
+            subjectSet = "JOIN WordSubject ON Word.word = WordSubject.word"
+        else:
+            subjectSet = ""
 
         if isRio and isKKUKO:
             options += "AND (kkuko = true AND rio = true)\n"
@@ -83,16 +87,14 @@ class WordDB:
         else:
             options += "AND (kkuko = false AND rio = false)\n"
 
-        if subject != "all":
-            options += f"AND subject = '{subject}'"
         if isOneHitWord:
             oneHitWordInitial = self.oneHitWordInitial(first_letter, item_letter, options, isOneHitWord)
             options += oneHitWordInitial
 
         if dto.type == 'attack':
-            sql = self.attack(first_letter, item_letter, rangeSet, options)
+            sql = self.attack(first_letter, item_letter, rangeSet, options, subjectSet)
         if dto.type == 'hardAttack':
-            sql = self.hardAttack(first_letter, item_letter, rangeSet, options)
+            sql = self.hardAttack(first_letter, item_letter, rangeSet, options, subjectSet)
         elif dto.type == 'mission':
             if first_letter != "" and first_letter[0] not in 'ㄱㄴㄷㄹㅁㅂㅅㅇㅈㅊㅋㅌㅍㅎ':
                 sql = f"""
@@ -105,16 +107,16 @@ class WordDB:
                 count = 1000
 
             if dto.shMisType == 'value':
-                return self.valueMission(count, first_letter, item_letter, dto.mission, rangeSet, options)
-            sql = self.mission(count, first_letter, item_letter, dto.mission, rangeSet, dto.shMisType, options)
+                return self.valueMission(count, first_letter, item_letter, dto.mission, rangeSet, options, subjectSet)
+            sql = self.mission(count, first_letter, item_letter, dto.mission, rangeSet, dto.shMisType, options, subjectSet)
         elif dto.type == 'allMission':
-            sql = self.allMission(first_letter, item_letter, rangeSet, dto.tier, options)
+            sql = self.allMission(first_letter, item_letter, rangeSet, dto.tier, options, subjectSet)
         elif dto.type == 'protect':
-            sql = self.protect(first_letter, item_letter, rangeSet, options)
+            sql = self.protect(first_letter, item_letter, rangeSet, options, subjectSet)
         elif dto.type == 'villain':
-            sql = self.villain(first_letter, item_letter, dto.backWord, rangeSet, options)
+            sql = self.villain(first_letter, item_letter, dto.backWord, rangeSet, options, subjectSet)
         elif dto.type == 'long':
-            sql = self.long(first_letter, item_letter, rangeSet, options)
+            sql = self.long(first_letter, item_letter, rangeSet, options, subjectSet)
 
         result = self.session.execute(text(sql)).fetchall()
         return result
@@ -159,68 +161,71 @@ OR word LIKE '%{back_initial[0]}'"""
 
         return oneHitWordInitials
     
-    def attack(self, front_initial1, front_initial2, rangeSet, options):
+    def attack(self, front_initial1, front_initial2, rangeSet, options, subjectSet):
         if not rangeSet:
             rangeSet = f"""
             (
-                w.word LIKE '{front_initial1}%' OR
-                w.word LIKE '{front_initial2}%'
+                Word.word LIKE '{front_initial1}%' OR
+                Word.word LIKE '{front_initial2}%'
             )
         """
 
         sql = f"""
                 SELECT *
-                FROM Word w
+                FROM word
+                {subjectSet}
                 WHERE EXISTS (
                     SELECT 1
                     FROM AttackInitial a
-                    WHERE w.word LIKE CONCAT('%', a.initial)
+                    WHERE Word.word LIKE CONCAT('%', a.initial)
                 )
                 AND {rangeSet}
                 {options}
-                ORDER BY CHAR_LENGTH(w.word) DESC;
+                ORDER BY CHAR_LENGTH(Word.word) DESC;
             """
         return sql
     
-    def hardAttack(self, front_initial1, front_initial2, rangeSet, options):
+    def hardAttack(self, front_initial1, front_initial2, rangeSet, options, subjectSet):
         if not rangeSet:
             rangeSet = f"""
             (
-                w.word LIKE '{front_initial1}%' OR
-                w.word LIKE '{front_initial2}%'
+                Word.word LIKE '{front_initial1}%' OR
+                Word.word LIKE '{front_initial2}%'
             )
         """
 
         sql = f"""
                 SELECT *
-                FROM Word w
+                FROM word
+                {subjectSet}
                 WHERE EXISTS (
                     SELECT 1
                     FROM HardAttackInitial a
-                    WHERE w.word LIKE CONCAT('%', a.initial)
+                    WHERE Word.word LIKE CONCAT('%', a.initial)
                 )
                 AND {rangeSet}
                 {options}
-                ORDER BY CHAR_LENGTH(w.word) DESC;
+                ORDER BY CHAR_LENGTH(Word.word) DESC;
             """
         return sql
         
-    def mission(self, count, front_initial1, front_initial2, mission, rangeSet, shMisType, options):
+    def mission(self, count, front_initial1, front_initial2, mission, rangeSet, shMisType, options, subjectSet):
         if mission == "":
             if not rangeSet:
                 rangeSet = f"""
                 (
-                    word LIKE '{front_initial1}%' OR
-                    word LIKE '{front_initial2}%'
+                    Word.word LIKE '{front_initial1}%' OR
+                    Word.word LIKE '{front_initial2}%'
                 )
             """
 
             sql = f"""
-                SELECT word,
-                MaxCountCharacter(word) AS mission,
-                CHAR_LENGTH(word) AS len,
+                SELECT Word.word,
+                MaxCountCharacter(Word.word) AS mission,
+                CHAR_LENGTH(Word.word) AS len,
                 checked
-                FROM Word
+                FROM word
+{subjectSet}
                 WHERE {rangeSet}
                 {options}
                 ORDER BY mission DESC, len DESC
@@ -229,20 +234,21 @@ OR word LIKE '%{back_initial[0]}'"""
         elif front_initial1 == "":
             if not rangeSet:
                 rangeSet = f"""
-                word LIKE '%'
+                Word.word LIKE '%'
             """
                 
             sql = f"""
                 SELECT
-                word,
-                (CountCharacter(word, '{mission}'))
+                Word.word,
+                (CountCharacter(Word.word, '{mission}'))
                 AS mission,
                 RANK() OVER (ORDER BY 
-                    (CountCharacter(word, '{mission}')) DESC,
-                    CHAR_LENGTH(word) DESC)
+                    (CountCharacter(Word.word, '{mission}')) DESC,
+                    CHAR_LENGTH(Word.word) DESC)
                 AS ranking,
                 checked
-                FROM Word
+                FROM word
+                {subjectSet}
                 WHERE {rangeSet}
                 {options}
                 LIMIT 1000;
@@ -252,18 +258,19 @@ OR word LIKE '%{back_initial[0]}'"""
             if not rangeSet:
                 rangeSet = f"""
                 (
-                    word LIKE '{front_initial1}%' OR
-                    word LIKE '{front_initial2}%'
+                    Word.word LIKE '{front_initial1}%' OR
+                    Word.word LIKE '{front_initial2}%'
                 )
             """
 
             sql = f"""
                 SELECT
-                word,
-                CAST(calculate_value(word, '{mission}', 1, {count}) AS SIGNED)
+                Word.word,
+                CAST(calculate_value(Word.word, '{mission}', 1, {count}) AS SIGNED)
                 score,
                 checked
                 FROM Word
+                {subjectSet}
                 WHERE {rangeSet}
                 {options}
                 ORDER BY score DESC
@@ -273,8 +280,8 @@ OR word LIKE '%{back_initial[0]}'"""
             if not rangeSet:
                 rangeSet = f"""
                 (
-                    word LIKE '{front_initial1}%' OR
-                    word LIKE '{front_initial2}%'
+                    Word.word LIKE '{front_initial1}%' OR
+                    Word.word LIKE '{front_initial2}%'
                 )
             """
 
@@ -282,10 +289,11 @@ OR word LIKE '%{back_initial[0]}'"""
                 WITH SelectedWords AS (
                 SELECT
                     word,
-                    RIGHT(word, 1) AS last_char,
-                    CAST(calculate_value(word, '{mission}', 1, {count}) AS SIGNED) AS score,
+                    RIGHT(Word.word, 1) AS last_char,
+                    CAST(calculate_value(Word.word, '{mission}', 1, {count}) AS SIGNED) AS score,
                     checked
-                FROM Word
+                FROM word
+                {subjectSet}
                 WHERE {rangeSet}
                 {options}
                 ORDER BY score DESC
@@ -296,25 +304,26 @@ OR word LIKE '%{back_initial[0]}'"""
             SelectedWords.score - (
                 SELECT
                 CAST(GREATEST(
-                    calculate_value(word, '가', 1, {count}),
-                    calculate_value(word, '나', 1, {count}),
-                    calculate_value(word, '다', 1, {count}),
-                    calculate_value(word, '라', 1, {count}),
-                    calculate_value(word, '마', 1, {count}),
-                    calculate_value(word, '바', 1, {count}),
-                    calculate_value(word, '사', 1, {count}),
-                    calculate_value(word, '아', 1, {count}),
-                    calculate_value(word, '자', 1, {count}),
-                    calculate_value(word, '차', 1, {count}),
-                    calculate_value(word, '카', 1, {count}),
-                    calculate_value(word, '타', 1, {count}),
-                    calculate_value(word, '파', 1, {count}),
-                    calculate_value(word, '하', 1, {count})
+                    calculate_value(Word.word, '가', 1, {count}),
+                    calculate_value(Word.word, '나', 1, {count}),
+                    calculate_value(Word.word, '다', 1, {count}),
+                    calculate_value(Word.word, '라', 1, {count}),
+                    calculate_value(Word.word, '마', 1, {count}),
+                    calculate_value(Word.word, '바', 1, {count}),
+                    calculate_value(Word.word, '사', 1, {count}),
+                    calculate_value(Word.word, '아', 1, {count}),
+                    calculate_value(Word.word, '자', 1, {count}),
+                    calculate_value(Word.word, '차', 1, {count}),
+                    calculate_value(Word.word, '카', 1, {count}),
+                    calculate_value(Word.word, '타', 1, {count}),
+                    calculate_value(Word.word, '파', 1, {count}),
+                    calculate_value(Word.word, '하', 1, {count})
                 ) AS SIGNED) AS max_score
                 FROM 
                     Word
+                {subjectSet}
                 WHERE 
-                    word LIKE CONCAT(last_char, '%')
+                    Word.word LIKE CONCAT(last_char, '%')
                 ORDER BY 
                     max_score DESC
                 LIMIT 1
@@ -328,22 +337,23 @@ OR word LIKE '%{back_initial[0]}'"""
             if not rangeSet:
                 rangeSet = f"""
                 (
-                    LEFT(word, {len(front_initial1)}) = '{front_initial1}'
-                    OR LEFT(word, {len(front_initial1)}) = '{front_initial2}'
+                    LEFT(Word.word, {len(front_initial1)}) = '{front_initial1}'
+                    OR LEFT(Word.word, {len(front_initial1)}) = '{front_initial2}'
                 )
             """
 
             sql = f"""
                 SELECT
-                word,
-                (CountCharacter(word, '{mission}'))
+                Word.word,
+                (CountCharacter(Word.word, '{mission}'))
                 AS mission,
                 RANK() OVER (ORDER BY 
-                    (CountCharacter(word, '{mission}')) DESC,
-                    CHAR_LENGTH(word) DESC)
+                    (CountCharacter(Word.word, '{mission}')) DESC,
+                    CHAR_LENGTH(Word.word) DESC)
                 AS ranking,
                 checked
-                FROM Word
+                FROM word
+                {subjectSet}
                 WHERE {rangeSet}
                 {options}
                 LIMIT 10;
@@ -482,7 +492,7 @@ OR word LIKE '%{back_initial[0]}'"""
     def getBackInitials(self, rangeSet, options):
         sql = f"""
             SELECT RIGHT(word, 1)
-            FROM Word
+            FROM word
             WHERE {rangeSet}
             {options}
         """
@@ -495,7 +505,7 @@ OR word LIKE '%{back_initial[0]}'"""
             print(f"Error: {e}")
             return ["문제가 발생하였습니다."]
 
-    def valueMission(self, count, front_initial1, front_initial2, mission, rangeSet, options):
+    def valueMission(self, count, front_initial1, front_initial2, mission, rangeSet, options, subjectSet):
         chain = 1
 
         if not rangeSet:
@@ -531,7 +541,8 @@ OR word LIKE '%{back_initial[0]}'"""
                 RIGHT(word, 1) AS last_char,
                 checked,
                 getDoumChar(RIGHT(word, 1)) AS doum_char
-            FROM Word
+            FROM word
+            {subjectSet}
             WHERE {rangeSet}
             {options}
         """
@@ -557,7 +568,7 @@ OR word LIKE '%{back_initial[0]}'"""
 
         return sorted(res, key=lambda x: x[1], reverse=True)
     
-    def allMission(self, front_initial1, front_initial2, rangeSet, tier, options):
+    def allMission(self, front_initial1, front_initial2, rangeSet, tier, options, subjectSet):
         if not rangeSet:
             rangeSet = f"""
             (
@@ -569,99 +580,179 @@ OR word LIKE '%{back_initial[0]}'"""
         if 'a' <= front_initial1 <= 'z':
             sql = f"""
                 WITH CountMissions AS (
-                    SELECT word, subject, 'a' AS mission_letter, CountCharacter(word, 'a') AS letter_count, CHAR_LENGTH(word) AS word_length, checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'a' AS mission_letter, CountCharacter(word, 'a') AS letter_count, CHAR_LENGTH(Word.word) AS word_length, checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'b', CountCharacter(word, 'b'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'b', CountCharacter(word, 'b'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'c', CountCharacter(word, 'c'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'c', CountCharacter(word, 'c'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'd', CountCharacter(word, 'd'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'd', CountCharacter(word, 'd'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'e', CountCharacter(word, 'e'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'e', CountCharacter(word, 'e'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'f', CountCharacter(word, 'f'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'f', CountCharacter(word, 'f'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'g', CountCharacter(word, 'g'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'g', CountCharacter(word, 'g'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'h', CountCharacter(word, 'h'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'h', CountCharacter(word, 'h'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'i', CountCharacter(word, 'i'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'i', CountCharacter(word, 'i'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'j', CountCharacter(word, 'j'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'j', CountCharacter(word, 'j'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'k', CountCharacter(word, 'k'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'k', CountCharacter(word, 'k'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'l', CountCharacter(word, 'l'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'l', CountCharacter(word, 'l'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'm', CountCharacter(word, 'm'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'm', CountCharacter(word, 'm'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'n', CountCharacter(word, 'n'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'n', CountCharacter(word, 'n'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'o', CountCharacter(word, 'o'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'o', CountCharacter(word, 'o'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'p', CountCharacter(word, 'p'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'p', CountCharacter(word, 'p'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'q', CountCharacter(word, 'q'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'q', CountCharacter(word, 'q'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'r', CountCharacter(word, 'r'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'r', CountCharacter(word, 'r'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 's', CountCharacter(word, 's'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 's', CountCharacter(word, 's'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 't', CountCharacter(word, 't'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 't', CountCharacter(word, 't'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'u', CountCharacter(word, 'u'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'u', CountCharacter(word, 'u'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'v', CountCharacter(word, 'v'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'v', CountCharacter(word, 'v'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'w', CountCharacter(word, 'w'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'w', CountCharacter(word, 'w'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'x', CountCharacter(word, 'x'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'x', CountCharacter(word, 'x'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'y', CountCharacter(word, 'y'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'y', CountCharacter(word, 'y'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, 'z', CountCharacter(word, 'z'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, 'z', CountCharacter(word, 'z'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                 ),
                 RankedResults AS (
-                    SELECT word, subject, mission_letter, letter_count, word_length, checked, 
+                    SELECT word, mission_letter, letter_count, word_length, checked, 
                         ROW_NUMBER() OVER (PARTITION BY mission_letter ORDER BY letter_count DESC, word_length DESC) AS ranks 
                     FROM CountMissions
                 )
-                SELECT word, subject, mission_letter FROM RankedResults WHERE ranks = {tier}
+                SELECT word, mission_letter FROM RankedResults WHERE ranks = {tier}
             """
 
         elif '가' <= front_initial1 <= '힣':
             sql = f"""
                 WITH CountMissions AS (
-                    SELECT word, subject, '가' AS mission_letter, CountCharacter(word, '가') AS letter_count, CHAR_LENGTH(word) AS word_length, checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '가' AS mission_letter, CountCharacter(word, '가') AS letter_count, CHAR_LENGTH(Word.word) AS word_length, checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '나', CountCharacter(word, '나'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '나', CountCharacter(word, '나'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '다', CountCharacter(word, '다'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '다', CountCharacter(word, '다'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '라', CountCharacter(word, '라'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '라', CountCharacter(word, '라'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '마', CountCharacter(word, '마'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '마', CountCharacter(word, '마'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '바', CountCharacter(word, '바'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '바', CountCharacter(word, '바'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '사', CountCharacter(word, '사'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '사', CountCharacter(word, '사'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '아', CountCharacter(word, '아'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '아', CountCharacter(word, '아'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '자', CountCharacter(word, '자'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '자', CountCharacter(word, '자'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '차', CountCharacter(word, '차'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '차', CountCharacter(word, '차'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '카', CountCharacter(word, '카'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '카', CountCharacter(word, '카'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '타', CountCharacter(word, '타'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '타', CountCharacter(word, '타'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '파', CountCharacter(word, '파'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '파', CountCharacter(word, '파'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                     UNION ALL
-                    SELECT word, subject, '하', CountCharacter(word, '하'), CHAR_LENGTH(word), checked FROM word WHERE {rangeSet} {options}
+                    SELECT word, '하', CountCharacter(word, '하'), CHAR_LENGTH(Word.word), checked FROM word
+                    {subjectSet}
+                    WHERE {rangeSet} {options}
                 ),
                 RankedResults AS (
-                    SELECT word, subject, mission_letter, letter_count, word_length, checked, 
+                    SELECT word, mission_letter, letter_count, word_length, checked, 
                         ROW_NUMBER() OVER (PARTITION BY mission_letter ORDER BY letter_count DESC, word_length DESC) AS ranks 
                     FROM CountMissions
                 )
@@ -670,64 +761,67 @@ OR word LIKE '%{back_initial[0]}'"""
 
         return sql
 
-    def villain(self, front_initial1, front_initial2, back_word, rangeSet, options):
+    def villain(self, front_initial1, front_initial2, back_word, rangeSet, options, subjectSet):
         if not rangeSet:
             rangeSet = f"""
                 (
-                    word LIKE '{front_initial1}%{back_word}' OR
-                    word LIKE '{front_initial2}%{back_word}'
+                    Word.word LIKE '{front_initial1}%{back_word}' OR
+                    Word.word LIKE '{front_initial2}%{back_word}'
                 )
             """
 
         sql = f"""
                 SELECT *
-                FROM Word
+                FROM word
+                {subjectSet}
                 WHERE {rangeSet}
                 {options}
-                AND CHAR_LENGTH(word) <> 1
-                ORDER BY LEFT(word, {len(front_initial1)}) ASC, CHAR_LENGTH(word) DESC
+                AND CHAR_LENGTH(Word.word) <> 1
+                ORDER BY LEFT(Word.word, {len(front_initial1)}) ASC, CHAR_LENGTH(Word.word) DESC
                 LIMIT 10000
             """
         
         return sql
 
-    def protect(self, front_initial1, front_initial2, rangeSet, options):
+    def protect(self, front_initial1, front_initial2, rangeSet, options, subjectSet):
         if not rangeSet:
             rangeSet = f"""
                 (
-                    word LIKE '%{front_initial1}%' OR
-                    word LIKE '%{front_initial2}%'
+                    Word.word LIKE '%{front_initial1}%' OR
+                    Word.word LIKE '%{front_initial2}%'
                 )
             """
 
         sql = f"""
                 SELECT *
                 FROM Word
+                {subjectSet}
                 WHERE {rangeSet}
                 {options}
-                AND CHAR_LENGTH(word) <> 1
-                ORDER BY CHAR_LENGTH(word) DESC
+                AND CHAR_LENGTH(Word.word) <> 1
+                ORDER BY CHAR_LENGTH(Word.word) DESC
                 LIMIT 1000
             """
         
         return sql
         
-    def long(self, front_initial1, front_initial2, rangeSet, options):
+    def long(self, front_initial1, front_initial2, rangeSet, options, subjectSet):
         if not rangeSet:
             rangeSet = f"""
                 (
-                    word LIKE '{front_initial1}%' OR
-                    word LIKE '{front_initial2}%'
+                    Word.word LIKE '{front_initial1}%' OR
+                    Word.word LIKE '{front_initial2}%'
                 )
             """
 
         sql = f"""
                 SELECT *
                 FROM Word
+                {subjectSet}
                 WHERE {rangeSet}
                 {options}
-                AND CHAR_LENGTH(word) > 8
-                ORDER BY CHAR_LENGTH(word) DESC
+                AND CHAR_LENGTH(Word.word) > 8
+                ORDER BY CHAR_LENGTH(Word.word) DESC
                 LIMIT 1000
             """
         
@@ -737,6 +831,7 @@ OR word LIKE '%{back_initial[0]}'"""
         sql = """
         SELECT word, checked
         FROM word
+{subjectSet}
         WHERE word = '{0}'
         """.format(word)
 
@@ -852,19 +947,18 @@ OR word LIKE '%{back_initial[0]}'"""
             return ["error", "문제가 발생하였습니다."]
     
     def insert_word(self, dto):
-        subjects = dto['subject'] if dto['subject'] != 'all' else "X"
-        words = dto['word']
+        words = dto['word'].splitlines()
         rio = dto['rio']
         kkuko = dto['kkuko']
 
-        sql = text(f"INSERT IGNORE INTO Word VALUES (:word, :subject, 0, '', 1, {rio}, {kkuko})")
+        sql = text(f"INSERT IGNORE INTO Word VALUES (:word, 0, '', 1, {rio}, {kkuko})")
 
         try:
             result = self.session.execute(
               sql,
               [
-                {'word': w, 'subject': s}
-                for w, s in zip(words, subjects)
+                {'word': w}
+                for w in zip(words)
               ]
             )
             self.session.commit()
@@ -879,9 +973,9 @@ OR word LIKE '%{back_initial[0]}'"""
             return ["error", "문제가 발생하였습니다."]
         
     def delete_word(self, word):
-        words = word
+        words = word.splitlines()
 
-        sql = text("DELETE FROM Word WHERE word = (:word)")
+        sql = text("DELETE FROM word WHERE word = (:word)")
 
         try:
             result = self.session.execute(sql, [{'word': w} for w in words])
@@ -891,6 +985,44 @@ OR word LIKE '%{back_initial[0]}'"""
                 return ["warning", "존재하지 않는 단어입니다."]
             else:
                 return ["success", f"{affected_rows}개의 단어가 삭제되었습니다."]
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error: {e}")
+            return ["error", "문제가 발생하였습니다."]
+        
+    def insert_subject(self, dto):
+        words = dto['word']
+        subject = dto['subject']
+
+        sql = text(f"INSERT IGNORE INTO WordSubject VALUES (:word, :subject)")
+
+        try:
+            self.session.execute(
+              sql,
+              [
+                {'word': w, 'subject': s}
+                for w, s in zip(words, subject)
+              ]
+            )
+            self.session.commit()
+            return ["success", f"주제가 성공적으로 추가되었습니다."]
+        except Exception as e:
+            self.session.rollback()
+            print(f"Error: {e}")
+            return ["error", "문제가 발생하였습니다."]
+        
+    def delete_subject(self, dto):
+        words = dto['word']
+        subject = dto['subject']
+
+        sql = text(f"DELETE FROM WordSubject WHERE word = :word AND subject = :subject")
+
+        try:
+            for w, s in zip(words, subject):
+                self.session.execute(sql, {'word': w, 'subject': s})
+
+            self.session.commit()
+            return ["success", f"주제가 성공적으로 삭제되었습니다."]
         except Exception as e:
             self.session.rollback()
             print(f"Error: {e}")
@@ -932,6 +1064,7 @@ OR word LIKE '%{back_initial[0]}'"""
         sql = """
         SELECT sentence
         FROM word
+{subjectSet}
         WHERE word = '{0}'
         """.format(word)
 
@@ -993,9 +1126,9 @@ OR word LIKE '%{back_initial[0]}'"""
                 AS mission,
                 RANK() OVER (ORDER BY 
                     (CountCharacter(word, '{mi}')) DESC,
-                    CHAR_LENGTH(word) DESC)
+                    CHAR_LENGTH(Word.word) DESC)
                 AS ranking
-                FROM Word
+                FROM word
                 WHERE word LIKE '{firstInitial}%'
                 AND word LIKE '{secondInitial}%'
                 LIMIT 10;
@@ -1018,11 +1151,13 @@ OR word LIKE '%{back_initial[0]}'"""
         SELECT *
         FROM word
         WHERE word NOT REGEXP '^[a-z]'
-        AND length(word) > 1;
+        AND (kkuko = true OR (kkuko = true AND rio = true))
+        AND CHAR_LENGTH(Word.word) > 1
         """
 
         try:
             result = self.session.execute(text(sql)).fetchall()
+            print(result)
             return result
         except Exception as e:
             self.session.rollback()
@@ -1061,7 +1196,7 @@ OR word LIKE '%{back_initial[0]}'"""
                 pieceList += pieceItem
 
                 pieceSetting += f"""
-                    AND CHAR_LENGTH(word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')) BETWEEN 0 AND {pieceCount}
+                    AND CHAR_LENGTH(Word.word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')) BETWEEN 0 AND {pieceCount}
                 """
 
             sql += f"""
@@ -1071,8 +1206,8 @@ OR word LIKE '%{back_initial[0]}'"""
             sql += pieceSetting
 
             sql += f"""
-                AND char_length(word) <= 6
-                ORDER BY char_length(word) DESC
+                AND CHAR_LENGTH(Word.word) <= 6
+                ORDER BY CHAR_LENGTH(Word.word) DESC
             """
 
             try:
@@ -1087,7 +1222,7 @@ OR word LIKE '%{back_initial[0]}'"""
             sql = f"""
             SELECT word
             FROM word
-            WHERE CHAR_LENGTH(word) <= 6"""
+            WHERE CHAR_LENGTH(Word.word) <= 6"""
         
             try:
                 result = self.session.execute(text(sql)).fetchall()

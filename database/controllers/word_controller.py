@@ -36,15 +36,28 @@ def initial_max_score():
 @word_blueprint.route('/insert', methods=["POST"])
 def insert_word():
     word = request.json['word']
-    subject = request.json['subject']
     rio = request.json['rio']
     kkuko = request.json['kkuko']
-    dto = {'word': word, 'subject': subject, 'rio': rio, 'kkuko': kkuko}
+    dto = {'word': word, 'rio': rio, 'kkuko': kkuko}
     return word_service.insert_word(dto)
 
 @word_blueprint.route('/delete', methods=["POST"])
 def delete_word(): 
     return word_service.delete_word(request.json['word'])
+
+@word_blueprint.route('/insert_subject', methods=["POST"])
+def insert_subject():
+    word = request.json['word']
+    subject = request.json['subject']
+    dto = {'word': word, 'subject': subject}
+    return word_service.insert_subject(dto)
+
+@word_blueprint.route('/delete_subject', methods=["POST"])
+def delete_subject(): 
+    word = request.json['word']
+    subject = request.json['subject']
+    dto = {'word': word, 'subject': subject}
+    return word_service.delete_subject(dto)
 
 @word_blueprint.route('/known', methods=["POST"])
 def known_word(): 

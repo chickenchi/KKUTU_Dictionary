@@ -40,6 +40,12 @@ class WordService:
     def delete_word(self, word):
         return self.word_db.delete_word(word)
     
+    def insert_subject(self, dto):
+        return self.word_db.insert_subject(dto)
+    
+    def delete_subject(self, word):
+        return self.word_db.delete_subject(word)
+    
     def known_word(self, word, checked):
         return self.word_db.known_word(word, checked)
     

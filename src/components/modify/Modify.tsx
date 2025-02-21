@@ -4,6 +4,7 @@ import { Alarm } from "../../tools/alarmFunction/AlarmManager";
 import { useAlarm } from "../../tools/alarmFunction/AlarmProvider";
 
 import AddRemove from "./AddRemove";
+import SubjectModify from "./SubjectModify";
 
 const Header = styled.div`
   background-color: white;
@@ -71,7 +72,7 @@ const Modify = () => {
 
       <ToolList>
         <SearchContainer>
-          <SearchTitle>단어 수정</SearchTitle>
+          <SearchTitle>단어 변경</SearchTitle>
 
           <TypeContainer>
             <ModifyType
@@ -80,11 +81,12 @@ const Modify = () => {
               onChange={handleEditChange}
             >
               <option value="addRemove">추가 / 삭제</option>
-              <option value="modify">수정</option>
+              <option value="modify">주제 수정</option>
             </ModifyType>
           </TypeContainer>
         </SearchContainer>
         {editOption === "addRemove" ? <AddRemove /> : <></>}
+        {editOption === "modify" ? <SubjectModify /> : <></>}
       </ToolList>
     </Header>
   );

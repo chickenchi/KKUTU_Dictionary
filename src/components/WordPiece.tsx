@@ -579,7 +579,6 @@ const WordResultComponent = () => {
   }, [setSetting]);
 
   const removePiece = (word: string) => {
-    alert(word);
     const newPieces = new Set(pieces);
 
     navigator.clipboard.writeText(word);

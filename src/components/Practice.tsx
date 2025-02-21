@@ -441,7 +441,7 @@ const Practice = () => {
         rangeString = await getFromLocalStorage("wordRange");
       }
 
-      let checklist = [rangeString, false, injeongCheck];
+      let checklist = [rangeString, false, injeongCheck, false, false, true];
 
       let response = await axios.post("http://127.0.0.1:5000/word", {
         word: initialList,
@@ -510,7 +510,7 @@ const Practice = () => {
         rangeString = await getFromLocalStorage("wordRange");
       }
 
-      let checklist = [rangeString, false, injeongCheck];
+      let checklist = [rangeString, false, injeongCheck, false, false, true];
 
       const response = await axios.post("http://127.0.0.1:5000/word", {
         word: ["", ""],
@@ -590,7 +590,14 @@ const Practice = () => {
             rangeString = await getFromLocalStorage("wordRange");
           }
 
-          let checklist = [rangeString, false, injeongCheck];
+          let checklist = [
+            rangeString,
+            false,
+            injeongCheck,
+            false,
+            false,
+            true,
+          ];
 
           let response = await axios.post("http://127.0.0.1:5000/word", {
             word: initialList,

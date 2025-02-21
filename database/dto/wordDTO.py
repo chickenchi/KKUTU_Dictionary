@@ -3,11 +3,11 @@ class WordDTO:
         self._word = word
         self._backWord = backWord
         self._type = type
+        self._subject = subject
         self._mission = mission
         self._shMisType = shMisType
         self._checklist = checklist
         self._tier = tier
-        self._subject = subject
 
     @property
     def word(self):
@@ -16,6 +16,10 @@ class WordDTO:
     @property
     def type(self):
         return self._type
+    
+    @property
+    def subject(self):
+        return self._subject
     
     @property
     def mission(self):
@@ -37,6 +41,3 @@ class WordDTO:
     def tier(self):
         return self._tier
     
-    @property
-    def subject(self):
-        return self._subject
