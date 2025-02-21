@@ -9,6 +9,7 @@ word_service = WordService()
 
 @word_blueprint.route('/word', methods=["POST"])
 def find_word():
+    print(request.json)
     dto = WordDTO(
         word=request.json['word'],
         type=request.json['type'],

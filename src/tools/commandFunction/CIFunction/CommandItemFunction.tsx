@@ -1,11 +1,9 @@
 import { Dispatch, SetStateAction, useEffect } from "react";
 import { useAlarm } from "../../alarmFunction/AlarmProvider";
-import useCommand from "../CommandProvider";
 import { clearLocalStorage } from "../../../commonFunctions/LocalStorage";
 import { getInitialMaxScore } from "../innerComFunction/InitialMaxScore";
 import { fetchWordData } from "../innerComFunction/SearchWord";
 import { setWord } from "../innerComFunction/WordSet";
-import { useWord } from "../../wordFunction/WordProvider";
 import { UreadingWord } from "../innerComFunction/Ureading";
 import { useWaiting } from "../../waitFunction/WaitProvider";
 import { wordValueState } from "../../../RecoilAtoms/common/Atom";
@@ -78,7 +76,8 @@ const CommandItemFunction = ({
         "theory",
         missionInitial,
         false,
-        false
+        false,
+        "kkuko"
       );
       UreadingWord(resultWord.split("\n"), isRead);
     } else if (readTarget.includes("~")) {
@@ -94,7 +93,8 @@ const CommandItemFunction = ({
         "",
         "",
         false,
-        false
+        false,
+        "kkuko"
       );
 
       UreadingWord(resultWord.split("\n"), isRead);
@@ -125,8 +125,8 @@ const CommandItemFunction = ({
 
   const handleSearch = async () => {
     if (
-      countOccurrences(prompt, " ") < 2 ||
-      countOccurrences(prompt, " ") > 8
+      countOccurrences(prompt, " ") < 3 ||
+      countOccurrences(prompt, " ") > 9
     ) {
       setAlarm("error", "명령이 잘못되었습니다.");
       return;
@@ -136,9 +136,12 @@ const CommandItemFunction = ({
 
     const parts = searchTarget.split(" ");
     const searchType = parts[0];
-    const initial = parts[1];
-    const subject = parts[2];
-    const options = parts.slice(3);
+    const server = parts[1];
+    const initial = parts[2];
+    const subject = parts[3];
+    const options = parts.slice(4);
+
+    alert(server);
 
     let tier: number | string =
       options[0] === "*" ? "*" : options.length >= 1 ? parseInt(options[0]) : 1;
@@ -160,7 +163,8 @@ const CommandItemFunction = ({
           searchMissionType,
           missionInitial,
           isTenSecond,
-          isKnown
+          isKnown,
+          server
         );
         break;
 
@@ -175,7 +179,8 @@ const CommandItemFunction = ({
           searchMissionType,
           "",
           isTenSecond,
-          isKnown
+          isKnown,
+          server
         );
         break;
 
@@ -189,7 +194,8 @@ const CommandItemFunction = ({
           searchMissionType,
           "",
           isTenSecond,
-          isKnown
+          isKnown,
+          server
         );
         break;
     }

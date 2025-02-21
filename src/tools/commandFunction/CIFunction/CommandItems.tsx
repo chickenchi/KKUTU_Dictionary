@@ -25,7 +25,7 @@ export const commandList = [
   [
     "search",
     "단어를 검색합니다.",
-    "search [searchType] [initial] [subject] {tier} {isTenSecond} {isKnown} {shMisType}",
+    "search [searchType] [initial] [server] [subject] {tier} {isTenSecond} {isKnown} {shMisType}",
   ],
   ["iniMS", "앞 글자의 최대 점수를 구합니다.", "iniMS [initial] {chain}"],
   ["exit", "명령어를 나갑니다.", "exit"],
@@ -131,6 +131,15 @@ export const commandPresets = {
         ["protect", "모든 유형의 단어를 찾습니다."],
         ["long", "긴 단어를 찾습니다."],
         ["language", "언어 주제의 단어를 찾습니다."],
+      ],
+    },
+    {
+      sectionName: "서버 선택",
+      title: ["searchType", "(필수) 서버를 입력해 주세요!"],
+      options: [
+        ["kkuko", "끄투코리아 서버입니다."],
+        ["rio", "끄투리오 서버입니다."],
+        ["all", "있는 서버 중 모두 선택합니다."],
       ],
     },
     {

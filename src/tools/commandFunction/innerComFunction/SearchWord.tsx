@@ -60,7 +60,8 @@ export const fetchWordData = async (
   shMisType: string,
   missionValue: string,
   isTenSec: boolean,
-  isKnown: boolean
+  isKnown: boolean,
+  server: string
 ) => {
   try {
     let initialList: string[];
@@ -71,7 +72,17 @@ export const fetchWordData = async (
       initialList = [wordValue, wordValue];
     }
 
-    let checklist = [isTenSec, isKnown];
+    let isRioWord = server === "rio" || server === "all" ? true : false;
+    let iskkukoWord = server === "kkuko" || server === "all" ? true : false;
+
+    let checklist = [
+      isTenSec ? "1~9" : "1~1000",
+      isKnown,
+      false,
+      false,
+      isRioWord,
+      iskkukoWord,
+    ];
 
     if (missionValue === "*") selectedOption = "allMission";
 
