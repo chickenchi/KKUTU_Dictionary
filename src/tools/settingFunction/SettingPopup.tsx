@@ -102,8 +102,11 @@ const AttackLabel = styled.label`
 `;
 
 const AttackButton = styled.button`
-  width: 45px;
   height: 100%;
+
+  padding: 0 10px;
+
+  margin-right: 5px;
 
   font-family: "KCC-Hanbit";
 `;
@@ -169,6 +172,33 @@ export const SettingPopup = ({ setOpenSetting }: SettingPopupProps) => {
       const response = await axios.post("http://127.0.0.1:5000/attack_add", {
         initial: addAttackInitial,
       });
+
+      var requested = response.data;
+
+      switch (requested) {
+        case "성공":
+          setAlarm("success", `성공적으로 추가되었습니다.`);
+          break;
+        case "오류":
+          setAlarm("error", `오류가 발생했습니다.`);
+          break;
+        case "존재":
+          setAlarm("warning", `이미 존재하는 앞 글자입니다.`);
+          break;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const addRecommendAttackWord = async () => {
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:5000/recommend_attack_add",
+        {
+          initial: addAttackInitial,
+        }
+      );
 
       var requested = response.data;
 
@@ -273,6 +303,33 @@ export const SettingPopup = ({ setOpenSetting }: SettingPopupProps) => {
     }
   };
 
+  const pullbyRecommend = async () => {
+    try {
+      const response = await axios.post(
+        "http://127.0.0.1:5000/recommend_attack_pull",
+        {
+          initial: pullAttackInitial,
+        }
+      );
+
+      var requested = response.data;
+
+      switch (requested) {
+        case "성공":
+          setAlarm("success", `성공적으로 제외되었습니다.`);
+          break;
+        case "오류":
+          setAlarm("error", `오류가 발생했습니다.`);
+          break;
+        case "무효":
+          setAlarm("warning", `존재하지 않는 앞 글자입니다.`);
+          break;
+      }
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
   return (
     <SettingPopupDiv>
       <Popup>
@@ -296,7 +353,10 @@ export const SettingPopup = ({ setOpenSetting }: SettingPopupProps) => {
             placeholder="앞 글자 입력"
             maxLength={1}
           />
-          <AttackButton onClick={addAttackWord}>설정</AttackButton>
+          <AttackButton onClick={addAttackWord}>공격 설정</AttackButton>
+          <AttackButton onClick={addRecommendAttackWord}>
+            선호 공격 설정
+          </AttackButton>
         </AttackDiv>
         <AttackDiv>
           <AttackLabel>공격 글자 제외</AttackLabel>
@@ -306,7 +366,8 @@ export const SettingPopup = ({ setOpenSetting }: SettingPopupProps) => {
             placeholder="앞 글자 입력"
             maxLength={1}
           />
-          <AttackButton onClick={pull}>설정</AttackButton>
+          <AttackButton onClick={pull}>공격 설정</AttackButton>
+          <AttackButton onClick={pullbyRecommend}>선호 공격 설정</AttackButton>
         </AttackDiv>
         <WordRangeDiv>
           <WordRangeLabel>제한 글자 수 범위</WordRangeLabel>

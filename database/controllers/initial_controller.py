@@ -13,3 +13,13 @@ def add_initial():
 def pull_initial():
     initial = request.json['initial']
     return jsonify(initial_service.pull_initial(initial))
+
+@initial_blueprint.route('/recommend_attack_add', methods=["POST"])
+def recommend_add_initial():
+    initial = request.json['initial']
+    return jsonify(initial_service.recommend_add_initial(initial))
+
+@initial_blueprint.route('/recommend_attack_pull', methods=["POST"])
+def recommend_pull_initial():
+    initial = request.json['initial']
+    return jsonify(initial_service.recommend_pull_initial(initial))

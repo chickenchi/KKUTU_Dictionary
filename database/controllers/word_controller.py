@@ -3,6 +3,7 @@ from services.word_service import WordService
 from dto.wordDTO import WordDTO
 from dto.ureadDTO import UreadDTO
 from dto.missionDTO import MissionDTO
+from dto.pieceDTO import PieceDTO
 
 word_blueprint = Blueprint('word', __name__)
 word_service = WordService()
@@ -100,5 +101,9 @@ def initial():
 
 @word_blueprint.route('/find_word_by_piece', methods=["POST"])
 def find_word_by_piece():
-    pieces = request.json['pieces']
-    return jsonify(word_service.find_word_by_piece(pieces))
+    dto = PieceDTO(
+        piece = request.json['pieces'],
+        highPiece = request.json['highPieces'],
+        rarePiece = request.json['rarePieces'],
+    )
+    return jsonify(word_service.find_word_by_piece(dto))

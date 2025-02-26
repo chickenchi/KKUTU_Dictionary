@@ -40,3 +40,35 @@ class InitialDB:
             self.db.rollback()
             print(f"Error: {e}")
             return "오류"
+        
+    def recommend_add_initial(self, initial):
+        sql = f"INSERT IGNORE INTO HardAttackInitial VALUES (%s)"
+
+        try:
+            self.cur.execute(sql, initial)
+            self.db.commit()
+            affected_rows = self.cur.rowcount
+            if affected_rows == 0:
+                return "존재"
+            else:
+                return "성공"
+        except Exception as e:
+            self.db.rollback()
+            print(f"Error: {e}")
+            return "오류"
+        
+    def recommend_pull_initial(self, initial):
+        sql = f"DELETE FROM HardAttackInitial WHERE initial = (%s)"
+
+        try:
+            self.cur.execute(sql, initial)
+            self.db.commit()
+            affected_rows = self.cur.rowcount
+            if affected_rows == 0:
+                return "무효"
+            else:
+                return "성공"
+        except Exception as e:
+            self.db.rollback()
+            print(f"Error: {e}")
+            return "오류"

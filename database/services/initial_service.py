@@ -10,3 +10,9 @@ class InitialService:
     
     def pull_initial(self, initial):
         return self.memo_db.pull_initial(initial)
+    
+    def recommend_add_initial(self, initial):
+        return self.memo_db.recommend_add_initial(initial)
+    
+    def recommend_pull_initial(self, initial):
+        return self.memo_db.recommend_pull_initial(initial)

@@ -141,8 +141,6 @@ const CommandItemFunction = ({
     const subject = parts[3];
     const options = parts.slice(4);
 
-    alert(server);
-
     let tier: number | string =
       options[0] === "*" ? "*" : options.length >= 1 ? parseInt(options[0]) : 1;
     const isTenSecond = options[1] === "true";

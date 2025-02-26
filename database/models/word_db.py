@@ -4,7 +4,7 @@ from collections import Counter
 
 class WordDB:
     def setting(self):
-        engine = create_engine('mysql+pymysql://root:1234@localhost/KKUTU', echo=True)
+        engine = create_engine('mysql+pymysql://root:1234@localhost/KKUTU', echo=False)
         Session = sessionmaker(bind=engine)
         self.session = Session()
         print("connect ok")
@@ -119,6 +119,7 @@ class WordDB:
             sql = self.long(first_letter, item_letter, rangeSet, options, subjectSet)
 
         result = self.session.execute(text(sql)).fetchall()
+
         return result
     
     def oneHitWordInitial(self, front_initial1, front_initial2, options, isOneHitWord):
@@ -186,6 +187,8 @@ OR word LIKE '%{back_initial[0]}'"""
         return sql
     
     def hardAttack(self, front_initial1, front_initial2, rangeSet, options, subjectSet):
+
+
         if not rangeSet:
             rangeSet = f"""
             (
@@ -207,6 +210,7 @@ OR word LIKE '%{back_initial[0]}'"""
                 {options}
                 ORDER BY CHAR_LENGTH(Word.word) DESC;
             """
+
         return sql
         
     def mission(self, count, front_initial1, front_initial2, mission, rangeSet, shMisType, options, subjectSet):
@@ -1178,7 +1182,109 @@ OR word LIKE '%{back_initial[0]}'"""
             print(f"Error: {e}")
             return ["error", "문제가 발생하였습니다."]
         
-    def find_word_by_piece(self, pieces):
+    def rare_box(self, dto):
+        pieces = dto.piece
+        highPieces = dto.highPiece
+        rarePieces = dto.rarePiece
+
+        highPiecesSetting = ""
+        rarePiecesSetting = ""
+        elementPieceSetting = ""
+
+        pieceList = ""
+
+        for piece in highPieces:
+            pieceItem = piece[0] # 글자 조각
+            pieceCount = piece[1] # 개수
+
+            pieceList += pieceItem
+
+            if highPiecesSetting == "":
+                highPiecesSetting = f"""
+                    (CHAR_LENGTH(word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')))
+                """
+            else:
+                highPiecesSetting += f""" +
+                    (CHAR_LENGTH(word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')))
+                """
+
+            elementPieceSetting += f"""
+                AND (CHAR_LENGTH(word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')) <= {pieceCount})
+            """
+
+        for piece in rarePieces:
+            pieceItem = piece[0] # 글자 조각
+            pieceCount = piece[1] # 개수
+
+            pieceList += pieceItem
+
+            if rarePiecesSetting == "":
+                rarePiecesSetting = f"""
+                    (CHAR_LENGTH(word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')))
+                """
+            else:
+                rarePiecesSetting += f""" +
+                    (CHAR_LENGTH(word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')))
+                """
+
+            elementPieceSetting += f"""
+                AND (CHAR_LENGTH(word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')) <= {pieceCount})
+            """
+
+        for piece in pieces:
+            pieceItem = piece[0] # 글자 조각
+            pieceCount = piece[1] # 개수
+
+            pieceList += pieceItem
+
+            elementPieceSetting += f"""
+                AND (CHAR_LENGTH(word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')) <= {pieceCount})
+            """
+
+        if rarePiecesSetting == "": rarePiecesSetting = 0
+        if highPiecesSetting == "": highPiecesSetting = 0
+          
+        sql = f"""
+            SELECT word
+            FROM Word
+            WHERE CHAR_LENGTH(word) = 6
+            AND word REGEXP '^[{pieceList}]*$'
+            {elementPieceSetting}
+            AND
+            (
+                (
+                    -- 고급 글자가 4개인 경우
+                    {highPiecesSetting}
+                    >= 4
+                )
+                OR
+                ( -- 희귀 글자가 1개이고 고급 글자가 2개인 경우
+                    (
+                        {rarePiecesSetting}
+                    ) >= 1
+                    AND 
+                    (
+                        {highPiecesSetting}
+                    ) >= 2
+                )
+                OR
+                ( -- 희귀 글자가 2개일 경우
+                    (
+                        {rarePiecesSetting}
+                    ) >= 2
+                )
+            );
+        """
+
+        result = self.session.execute(text(sql)).fetchall()
+        return result
+        
+    def find_word_by_piece(self, dto):
+        pieces = dto.piece
+
+        if len(self.rare_box(dto)) != 0:
+            return result
+        
         if len(pieces) <= 300:
             pieceList = ""
 
@@ -1196,7 +1302,7 @@ OR word LIKE '%{back_initial[0]}'"""
                 pieceList += pieceItem
 
                 pieceSetting += f"""
-                    AND CHAR_LENGTH(Word.word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')) BETWEEN 0 AND {pieceCount}
+                    AND CHAR_LENGTH(word) - CHAR_LENGTH(REPLACE(word, '{pieceItem}', '')) BETWEEN 0 AND {pieceCount}
                 """
 
             sql += f"""
@@ -1206,8 +1312,8 @@ OR word LIKE '%{back_initial[0]}'"""
             sql += pieceSetting
 
             sql += f"""
-                AND CHAR_LENGTH(Word.word) <= 6
-                ORDER BY CHAR_LENGTH(Word.word) DESC
+                AND CHAR_LENGTH(word) <= 6
+                ORDER BY CHAR_LENGTH(word) DESC
             """
 
             try:
@@ -1222,7 +1328,7 @@ OR word LIKE '%{back_initial[0]}'"""
             sql = f"""
             SELECT word
             FROM word
-            WHERE CHAR_LENGTH(Word.word) <= 6"""
+            WHERE CHAR_LENGTH(word) <= 6"""
         
             try:
                 result = self.session.execute(text(sql)).fetchall()

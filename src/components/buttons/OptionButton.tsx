@@ -27,7 +27,7 @@ const OptionButton = () => {
     >
       <option value="mission">미션</option>
       <option value="attack">공격</option>
-      <option value="hardAttack">어려운 공격</option>
+      <option value="hardAttack">선호 공격</option>
       <option value="long">장문</option>
       <option value="villain">빌런 & 앞말</option>
       <option value="protect">모든 단어</option>

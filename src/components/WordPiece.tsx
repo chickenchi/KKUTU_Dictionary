@@ -527,6 +527,8 @@ const WordPieceComponent = () => {
 const WordResultComponent = () => {
   const [, setSetting] = useRecoilState(wordPieceSettingState);
   const [pieces, setPieces] = useRecoilState(wordPiecesState);
+  const [highPieces, setHighPieces] = useRecoilState(highWordPiecesState);
+  const [rarePieces, setRarePieces] = useRecoilState(rareWordPiecesState);
 
   const { setAlarm } = useAlarm();
 
@@ -542,11 +544,15 @@ const WordResultComponent = () => {
   useEffect(() => {
     const findWord = async () => {
       const piecesArray = Array.from(pieces);
+      const highPiecesArray = Array.from(highPieces);
+      const rarePiecesArray = Array.from(rarePieces);
 
       const response = await axios.post(
         "http://127.0.0.1:5000/find_word_by_piece",
         {
           pieces: piecesArray,
+          highPieces: highPiecesArray,
+          rarePieces: rarePiecesArray,
         }
       );
 
@@ -564,6 +570,8 @@ const WordResultComponent = () => {
       for (let i = 0; i < result.length; i++) {
         let wordLength = result[i].length;
         let word = result[i];
+
+        if (wordLength == 0) continue;
 
         if (
           result.length < 300 ||
